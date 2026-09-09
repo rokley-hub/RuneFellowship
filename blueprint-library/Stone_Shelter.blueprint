@@ -1,0 +1,35 @@
+#Name:Stone Shelter
+#Creator:Rune Fellowship
+#Description:Mid game. Stone side walls and timber ends; needs a stonecutter already in range. Workbench and bed inside, campfire outside, clear central aisle and open entrance. Prepare level ground.
+#Category:Rune Shelters
+#Pieces
+piece_workbench;BuildingWorkbench;-1.95;0;3.8;0;0.70710678;0;0.70710678;;1;1;1
+bed;BuildingWorkbench;1.9;0;3.8;0;0;0;1;;1;1;1
+fire_pit;BuildingWorkbench;4.9;0;3.8;0;0;0;1;;1;1;1
+stone_wall_4x2;BuildingWorkbench;-3.4;1;2;0;0.70710678;0;0.70710678;;1;1;1
+stone_wall_4x2;BuildingWorkbench;3.4;1;2;0;0.70710678;0;0.70710678;;1;1;1
+stone_wall_4x2;BuildingWorkbench;-3.4;1;6;0;0.70710678;0;0.70710678;;1;1;1
+stone_wall_4x2;BuildingWorkbench;3.4;1;6;0;0.70710678;0;0.70710678;;1;1;1
+woodwall;BuildingWorkbench;-2;1;8;0;0;0;1;;1;1;1
+woodwall;BuildingWorkbench;0;1;8;0;0;0;1;;1;1;1
+woodwall;BuildingWorkbench;2;1;8;0;0;0;1;;1;1;1
+woodwall;BuildingWorkbench;-2;1;0;0;0;0;1;;1;1;1
+woodwall;BuildingWorkbench;2;1;0;0;0;0;1;;1;1;1
+wood_roof;BuildingWorkbench;-2;2;1;0;-0.70710678;0;0.70710678;;1;1;1
+wood_roof;BuildingWorkbench;2;2;1;0;0.70710678;0;0.70710678;;1;1;1
+wood_roof_top;BuildingWorkbench;0;3;1;0;0.70710678;0;0.70710678;;1;1;1
+wood_roof;BuildingWorkbench;-2;2;3;0;-0.70710678;0;0.70710678;;1;1;1
+wood_roof;BuildingWorkbench;2;2;3;0;0.70710678;0;0.70710678;;1;1;1
+wood_roof_top;BuildingWorkbench;0;3;3;0;0.70710678;0;0.70710678;;1;1;1
+wood_roof;BuildingWorkbench;-2;2;5;0;-0.70710678;0;0.70710678;;1;1;1
+wood_roof;BuildingWorkbench;2;2;5;0;0.70710678;0;0.70710678;;1;1;1
+wood_roof_top;BuildingWorkbench;0;3;5;0;0.70710678;0;0.70710678;;1;1;1
+wood_roof;BuildingWorkbench;-2;2;7;0;-0.70710678;0;0.70710678;;1;1;1
+wood_roof;BuildingWorkbench;2;2;7;0;0.70710678;0;0.70710678;;1;1;1
+wood_roof_top;BuildingWorkbench;0;3;7;0;0.70710678;0;0.70710678;;1;1;1
+wood_wall_roof;BuildingWorkbench;-2;2;0;0;0;0;1;;1;1;1
+wood_wall_roof;BuildingWorkbench;2;2;0;0;1;0;6.123234e-17;;1;1;1
+wood_wall_roof_top;BuildingWorkbench;0;3;0;0;0;0;1;;1;1;1
+wood_wall_roof;BuildingWorkbench;-2;2;8;0;0;0;1;;1;1;1
+wood_wall_roof;BuildingWorkbench;2;2;8;0;1;0;6.123234e-17;;1;1;1
+wood_wall_roof_top;BuildingWorkbench;0;3;8;0;0;0;1;;1;1;1

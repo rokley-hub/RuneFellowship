@@ -2,7 +2,7 @@
 
 An unofficial Windows app and Valheim companion mod with local speech, natural-language orders, companion profiles, mod management and an in-game task overview.
 
-**Release candidate: not yet published or certified stable.** See the setup guide, privacy description and known limitations in `docs`. The app does not include Valheim. Donations are voluntary and do not unlock features. Rune is not affiliated with Iron Gate, Coffee Stain or OpenAI.
+**Public source preview. The packaged Windows app is still undergoing release review; no public installer is available yet.** See the setup guide, privacy description and known limitations in `docs`. The app does not include Valheim. Donations are voluntary and do not unlock features. Rune is not affiliated with Iron Gate, Coffee Stain or OpenAI.
 
 ## Install and play
 

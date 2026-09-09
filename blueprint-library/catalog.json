@@ -1,0 +1,29 @@
+[
+  {
+    "name": "Camp Shelter",
+    "stage": "Early game",
+    "file": "Camp_Shelter.blueprint",
+    "pieces": 29,
+    "footprint": "6 x 6 m interior plot; allow 11 x 10 m including fire and access",
+    "command": "planbuild camp shelter on me",
+    "description": "Wooden shelter. Workbench and bed inside, campfire outside, clear central aisle and open entrance. Prepare level ground."
+  },
+  {
+    "name": "Stone Shelter",
+    "stage": "Mid game",
+    "file": "Stone_Shelter.blueprint",
+    "pieces": 30,
+    "footprint": "6 x 8 m interior plot; allow 11 x 12 m including fire and access",
+    "command": "planbuild stone shelter on me",
+    "description": "Stone side walls and timber ends; needs a stonecutter already in range. Workbench and bed inside, campfire outside, clear central aisle and open entrance. Prepare level ground."
+  },
+  {
+    "name": "Marble Shelter",
+    "stage": "Late game",
+    "file": "Marble_Shelter.blueprint",
+    "pieces": 40,
+    "footprint": "6 x 6 m interior plot; allow 11 x 10 m including fire and access",
+    "command": "planbuild marble shelter on me",
+    "description": "Black marble shelter; needs a stonecutter already in range. Workbench and bed inside, campfire outside, clear central aisle and open entrance. Prepare level ground."
+  }
+]
