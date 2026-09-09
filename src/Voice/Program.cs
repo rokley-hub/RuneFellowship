@@ -12,12 +12,15 @@ internal static class Program
     {
         if (args.Length >= 3 && args[0] is "--reply-voice-check" or "--live-reply-voice-check") { RuneWindow.TestReplyVoice(args[1], args[2], args[0] == "--live-reply-voice-check"); return; }
         if (args.Length >= 3 && args[0] == "--voice-maintenance-check") { RuneWindow.TestVoiceMaintenance(args[1], args[2]); return; }
+        if (args.Length >= 3 && args[0] == "--local-service-check") { try { LocalBrainChecks.Run(args[1],args[2]).GetAwaiter().GetResult(); } catch(Exception e) { File.WriteAllText(args[2],e.ToString()); Environment.ExitCode=1; } return; }
         if (args.Length >= 2 && args[0] == "--session-fix-checks") { SessionFixChecks.Run(args[1]); return; }
         if (args.Length >= 2 && args[0] == "--performance-checks") { PerformanceChecks.Run(args[1]); return; }
         if (args.Length >= 2 && args[0] == "--reliability-checks") { ReliabilityChecks.Run(args[1]); return; }
         if (args.Length >= 3 && args[0] == "--live-memory-check") { ReliabilityChecks.LiveMemory(args[1], args[2]).GetAwaiter().GetResult(); return; }
         if (args.Length >= 3 && args[0] == "--shell-voice-preview-test") { RuneWindow.TestShellVoicePreview(args[1], args[2]); return; }
         if (args.Length >= 2 && args[0] == "--owned-mod-checks") { OwnedModChecks.Run(args[1]); return; }
+        if (args.Length >= 2 && args[0] == "--mod-source-checks") { ModSourceChecks.Run(args[1]); return; }
+        if (args.Length >= 2 && args[0] == "--nexus-mod-checks") { NexusModChecks.Run(args[1]); return; }
         if (args.Length >= 2 && args[0] == "--xml-profile-checks") { ModProfileXmlChecks.Run(args[1], args.Length >= 3 ? args[2] : null); return; }
         if (args.Length >= 4 && args[0] == "--config-match-check") { try { File.WriteAllLines(args[3], OwnedMods.ConfigFilesFor(args[1], args[2])); } catch (Exception e) { File.WriteAllText(args[3], "FAILED: " + e); Environment.ExitCode = 1; } return; }
         if (args.Length >= 4 && args[0] == "--attach-rune-profile") { try { OwnedMods.AddRune(args[1], args[2], args[3]); } catch (Exception e) { File.WriteAllText(Path.Combine(args[1], "attach-error.txt"), e.ToString()); Environment.ExitCode = 1; } return; }

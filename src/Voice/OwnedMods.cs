@@ -5,7 +5,7 @@ using System.Runtime.InteropServices;
 namespace Rune.Voice;
 
 internal sealed record OwnedMod(string Id, string Name, string Version, bool Enabled, string[] Dependencies, string[] Files);
-internal static class OwnedMods
+internal static partial class OwnedMods
 {
     internal const string Manifest = "rune-profile.json";
     private static readonly JsonSerializerOptions Json = new() { WriteIndented = true };
@@ -236,6 +236,8 @@ internal static class OwnedMods
                 else if (path.Contains('/') || !(path.Equals("manifest.json", StringComparison.OrdinalIgnoreCase) || path.Equals("icon.png", StringComparison.OrdinalIgnoreCase) || path.EndsWith(".md", StringComparison.OrdinalIgnoreCase))) relative = "BepInEx/plugins/" + mod.Id + "/" + path;
                 if (relative != null && (path.EndsWith(".exe", StringComparison.OrdinalIgnoreCase) || path.EndsWith(".msi", StringComparison.OrdinalIgnoreCase))) throw new IOException("This is a desktop installer, not a supported Valheim mod package.");
             }
+            if (relative == null && (path.EndsWith(".md", StringComparison.OrdinalIgnoreCase) || Path.GetFileName(path).StartsWith("LICENSE", StringComparison.OrdinalIgnoreCase) || Path.GetFileName(path).StartsWith("NOTICE", StringComparison.OrdinalIgnoreCase)))
+                relative = "BepInEx/docs/" + mod.Id + "/" + path;
             if (relative == null) continue;
             string target = SafePath(stage, relative);
             if (!files.Add(relative)) throw new IOException("Package has duplicate file paths.");

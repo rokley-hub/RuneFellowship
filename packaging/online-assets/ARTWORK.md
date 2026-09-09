@@ -1,0 +1,9 @@
+# Rune installer artwork
+
+`rune-installer-original.png` is the unmodified original image generated for this installer using OpenAI's built-in image-generation tool on 9 September 2026. Mode: new image, no reference images. The installer renders a crop using WPF; all installer wording is real interface text and is not painted into the image.
+
+Prompt:
+
+Use case: stylized-concept. Create an original premium game installer background for Rune Fellowship, an unofficial Norse companion app for Valheim. Landscape 3:2 composition, high-end cinematic 3D character render, tactile realistic weathered materials with a painterly fantasy atmosphere. A mature adult Viking shieldmaiden called Rune, kind but fiercely capable, auburn braided hair, natural face, practical layered wool, leather and dark iron armor, a fur mantle, worn round wooden shield resting by her side. She stands in the LEFT THIRD, three-quarter view looking gently toward the viewer. Waist-up character fully readable, warm firelight on her face and amber edge light, cool misty Nordic pine forest and distant timber longhouse. Subtle knotwork carvings only on shield rim, authentic grounded detail. Palette deep charcoal green, warm bronze and muted cream. RIGHT HALF must be dark soft atmospheric negative space for installer controls, not cluttered. No text, no lettering, no logos, no UI, no giant glowing runes, no watermarks, no extra people, no modern items, no horns on helmet, no pin-up styling. Composition should feel welcoming, confident and expensive, suitable for a polished desktop installer.
+
+This is original generated promotional art, not an official Valheim asset or a representation of an endorsement. Generation does not guarantee exclusivity or copyright protection. Apply relevant AI-content disclosure tags when publishing.

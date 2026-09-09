@@ -192,18 +192,18 @@ namespace Rune.Mod
             var existing = Find(command.companionId);
             if (existing)
             {
-                if (existing.CargoCount > 0 || existing.HasBorrowedEquipment) { reply.message = "Tell " + existing.DisplayName + " to return all cargo and borrowed gear before removing them."; return reply; }
-                string name = existing.DisplayName; existing.DropPersonalEquipment(); ZNetScene.instance.Destroy(existing.gameObject); reply.accepted = true; reply.message = name + " was removed from this world and the fellowship. Any personal equipment was left on the ground."; Note = reply.message; return reply;
+                if (existing.CargoCount > 0 || existing.HasBorrowedEquipment) { reply.message = "Tell " + existing.DisplayName + " to return all cargo and borrowed gear before unsummoning them."; return reply; }
+                string name = existing.DisplayName; existing.DropPersonalEquipment(); ZNetScene.instance.Destroy(existing.gameObject); reply.accepted = true; reply.message = name + " was unsummoned from this world. Any personal equipment was left on the ground."; Note = reply.message; return reply;
             }
             var zdos = new List<ZDO>(); int index = 0;
             foreach (string skin in new[] { "skeleton", "draugr", "elite", "dwarf", "wolf" }) { index = 0; while (!ZDOMan.instance.GetAllZDOsWithPrefabIterative(PrefabFor(skin), zdos, ref index)) { } }
             var saved = zdos.FirstOrDefault(z => z.GetLong("rune.owner", 0) == Player.m_localPlayer.GetPlayerID() && z.GetString("rune.id", "") == command.companionId);
-            if (saved == null) { reply.accepted = true; reply.message = command.displayName + " had no body in this world. The local profile can be removed."; return reply; }
+            if (saved == null) { reply.accepted = true; reply.message = command.displayName + " is already unsummoned in this world."; return reply; }
             try {
                 string encoded = saved.GetString("rune.inventory", ""); var inventory = new Inventory("rune-remove-check", null, 8, 4); if (encoded.Length > 0) inventory.Load(new ZPackage(Convert.FromBase64String(encoded)));
-                if (inventory.GetAllItems().Any(i => !i.m_customData.ContainsKey("rune.starter"))) { reply.message = command.displayName + " is carrying items at " + saved.GetPosition().ToString("F0") + ". Return there and ask them to return before removal."; return reply; }
-            } catch { reply.message = "Could not safely inspect " + command.displayName + "'s saved inventory. Return to them before removal."; return reply; }
-            ZDOMan.instance.DestroyZDO(saved); reply.accepted = true; reply.message = command.displayName + " was removed from this world and the fellowship. Any personal equipment was left on the ground."; Note = reply.message; return reply;
+                if (inventory.GetAllItems().Any(i => !i.m_customData.ContainsKey("rune.starter"))) { reply.message = command.displayName + " is carrying items at " + saved.GetPosition().ToString("F0") + ". Return there and ask them to return before unsummoning."; return reply; }
+            } catch { reply.message = "Could not safely inspect " + command.displayName + "'s saved inventory. Return to them before unsummoning."; return reply; }
+            ZDOMan.instance.DestroyZDO(saved); reply.accepted = true; reply.message = command.displayName + " was unsummoned from this world. Any personal equipment was left on the ground."; Note = reply.message; return reply;
         }
         private void WriteState()
         {
@@ -252,7 +252,7 @@ namespace Rune.Mod
             controlAppearance = GUILayout.SelectionGrid(selected ? Array.IndexOf(new[] { "skeleton", "draugr", "elite", "dwarf", "wolf" }, selected.Appearance) : controlAppearance, new[] { "Skeleton", "Draugr", "Elite", "Dwarf", "Wolf" }, 5);
             GUILayout.Label(Note, new GUIStyle(GUI.skin.label) { wordWrap = true });
             GUILayout.BeginHorizontal();
-            foreach (string action in new[] { "summon", "follow", "stay", "return" }) if (GUILayout.Button(action)) LocalOrder(action);
+            foreach (string action in new[] { "summon", "follow", "stay", "return", "dismiss" }) if (GUILayout.Button(action == "dismiss" ? "Unsummon" : action)) LocalOrder(action);
             GUILayout.EndHorizontal();
             GUILayout.BeginHorizontal();
             if (GUILayout.Button("Gather 20 wood")) LocalOrder("gather_wood");

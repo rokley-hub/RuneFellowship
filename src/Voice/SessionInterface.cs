@@ -57,7 +57,7 @@ public sealed partial class RuneWindow
             File.WriteAllText(path + ".tmp", JsonSerializer.Serialize(new {
                 timestamp = Rules.Now, session = taskTrace.SessionId, companion = bridge.CompanionId,
                 provider = preferences.AiMode == "chatgpt" ? "Full ChatGPT · " + VoiceCatalog.EngineName(CurrentProfile.VoiceEngine) + " offline voice" : preferences.ChatGptEnabled ? "ChatGPT commands · Qwen conversation · " + VoiceCatalog.EngineName(CurrentProfile.VoiceEngine) + " voice" : "Qwen brain · " + VoiceCatalog.EngineName(CurrentProfile.VoiceEngine) + " voice", state = MicrophoneStatus,
-                alwaysOn = AlwaysOn, muted = microphoneMuted, hotkey = preferences.MicShortcut, switchKey = preferences.SwitchCompanionShortcut, companionName = DisplayName, overlayKey = preferences.OverlayShortcut, controlsKey = preferences.ControlsShortcut,
+                trackedCompanions = preferences.Profiles.Where(p=>p.ShowOnMap).Select(p=>p.Id).ToArray(), alwaysOn = AlwaysOn, muted = microphoneMuted, hotkey = preferences.MicShortcut, switchKey = preferences.SwitchCompanionShortcut, companionName = DisplayName, overlayKey = preferences.OverlayShortcut, controlsKey = preferences.ControlsShortcut,
                 recorder = taskTrace.Health, controlAck = lastVoiceControl, caption = DateTime.UtcNow < controlNoticeUntil ? controlNotice : "",
                 activity = ReplyPlaying ? DisplayName + (neural.IsSpeaking ? recoveryVoice ? " · speaking · fast voice" : " · speaking" : " · preparing voice… " + Math.Max(0, (int)(DateTime.UtcNow - voiceStarted).TotalSeconds) + "s") : busyGeneration == generation ? DisplayName + " · thinking…" : ""
             }));

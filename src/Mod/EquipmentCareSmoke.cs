@@ -52,7 +52,7 @@ namespace Rune.Mod
                 report.Add("PASS: Low durability without a station reports the need and does not change durability.");
                 var point = npc.transform.position + Vector3.forward * 5; if (Heightmap.GetHeight(point, out float ground)) point.y = ground;
                 station = UnityEngine.Object.Instantiate(ZNetScene.instance.GetPrefab("piece_workbench"), point, Quaternion.identity).GetComponent<CraftingStation>();
-                station.GetComponent<Piece>().SetCreator(player.GetPlayerID());
+                station.GetComponent<Piece>().AssignCreator(player.GetPlayerID());
             } catch (Exception e) { report.Add("FAILED crafting/setup: " + e); }
             yield return new WaitForSecondsRealtime(2);
             Vector3 start = npc ? npc.transform.position : Vector3.zero;

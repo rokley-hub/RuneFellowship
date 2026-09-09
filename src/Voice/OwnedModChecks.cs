@@ -19,9 +19,10 @@ internal static class OwnedModChecks
         try {
             string profile = OwnedMods.Create(root, "Package test " + Guid.NewGuid().ToString("N")[..6]);
             var catalog = new CatalogMod("Fixture-Test", "Test", "1.0.0", "", Array.Empty<string>(), "", "", false);
-            var package = Package("Test", "1.0.0", ("plugins/Test.dll", "original dll"), ("plugins/assets/wood.bundle", "asset"), ("config/test.cfg", "original setting"));
+            var package = Package("Test", "1.0.0", ("plugins/Test.dll", "original dll"), ("plugins/assets/wood.bundle", "asset"), ("config/test.cfg", "original setting"), ("LICENSE.md", "author license"));
             OwnedMods.Transaction(profile, stage => OwnedMods.Save(stage, new() { OwnedMods.InstallArchive(stage, catalog, package, new()) }));
             Check(File.ReadAllText(Path.Combine(profile, "BepInEx/plugins/Fixture-Test/assets/wood.bundle")) == "asset", "Archive preserves nested plugin assets and maps config separately.");
+            Check(File.Exists(Path.Combine(profile,"BepInEx/docs/Fixture-Test/LICENSE.md")), "Thunderstore installation retains author license documents.");
             OwnedMods.Toggle(profile, catalog.Id);
             Check(File.Exists(Path.Combine(profile, "BepInEx/plugins/Fixture-Test/Test.dll.old")) && File.Exists(Path.Combine(profile, "BepInEx/config/test.cfg")), "Disable removes plugin and assets from loading while keeping configuration.");
             OwnedMods.Toggle(profile, catalog.Id);

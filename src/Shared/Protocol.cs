@@ -6,7 +6,7 @@ namespace Rune.Shared
 {
     public static class Release
     {
-        public const string Gameplay = "0.3.14", Desktop = "0.4.21";
+        public const string Gameplay = "0.3.16", Desktop = "0.4.26";
         public const int Protocol = 2;
     }
     [Serializable] public class GameState

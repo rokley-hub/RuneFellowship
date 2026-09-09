@@ -1,6 +1,6 @@
 """Rune package verification, transactional install and conservative rollback."""
 from pathlib import Path
-import argparse, hashlib, json, os, shutil, tempfile, zipfile, sys, uuid
+import argparse, contextlib, hashlib, json, os, shutil, tempfile, zipfile, sys, uuid
 
 def sha(p):
     with p.open('rb') as f: return hashlib.file_digest(f,'sha256').hexdigest()
@@ -27,6 +27,15 @@ def read_manifest(root):
         if key in seen: raise ValueError('Duplicate package path')
         seen.add(key)
     return doc
+
+@contextlib.contextmanager
+def pack_staging(root):
+    # Inherit the chosen install folder's Windows ACL. TemporaryDirectory's
+    # owner-only ACL can exclude the restricted token running an installer.
+    name='.pack-stage-'+uuid.uuid4().hex
+    folder=safe(root,name);folder.mkdir(mode=0o777)
+    try:yield folder
+    finally:shutil.rmtree(safe(root,name))
 
 def verify(root):
     manifest=read_manifest(root)
@@ -89,7 +98,7 @@ def install_pack(root,identifier,archive):
     catalog=json.loads((root/'packs.json').read_text()); expected=catalog[identifier]
     if archive.stat().st_size!=expected['bytes'] or sha(archive)!=expected['sha256']: raise ValueError('Pack failed integrity verification')
     if shutil.disk_usage(root).free<expected['unpackedBytes']*2+100_000_000: raise ValueError('Not enough space for this pack')
-    with tempfile.TemporaryDirectory(prefix='.pack-stage-',dir=root) as staging:
+    with pack_staging(root) as staging:
         stage=Path(staging)
         with zipfile.ZipFile(archive) as z:
             if z.getinfo('pack.json').file_size>30_000_000: raise ValueError('Pack manifest too large')

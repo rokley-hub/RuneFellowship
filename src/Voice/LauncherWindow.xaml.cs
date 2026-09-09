@@ -71,12 +71,13 @@ public partial class LauncherWindow : Window
         InitializeComponent();
         InitializeChoices();
         InitializeCommandLibrary();
+        runtime.ShellCommandsRequested += OpenCommandsFromRuntime;
         ReloadEverything();
         SetModsMode(false);
-        _ = EnsureCatalogFresh();
+        if (!UseNexus) _ = EnsureCatalogFresh();
         refreshTimer.Tick += RefreshTimer_Tick;
         refreshTimer.Start();
-        Closed += (_, _) => { refreshTimer.Stop(); voicePreview?.Cancel(); runtime.ShellSetShortcutCapture(false); health.Dispose(); };
+        Closed += (_, _) => { runtime.ShellCommandsRequested -= OpenCommandsFromRuntime; refreshTimer.Stop(); voicePreview?.Cancel(); runtime.ShellSetShortcutCapture(false); health.Dispose(); };
         if (!Environment.GetCommandLineArgs().Contains("--wpf-preview") && File.Exists(Path.Combine(AppContext.BaseDirectory, "..", "release.json")))
             ContentRendered += (_, _) => ShowFirstRunOnce();
     }
@@ -94,6 +95,9 @@ public partial class LauncherWindow : Window
         ModsFilterCombo.SelectedIndex = 0;
     }
 
+    private void OpenCommandsFromRuntime() { ShowPage("Commands"); if (WindowState == WindowState.Minimized) WindowState = WindowState.Normal; Activate(); }
+    private void CommandSearch_Changed(object sender, TextChangedEventArgs e) { if (CommandActionList != null) CommandGroup_Changed(sender,new SelectionChangedEventArgs(System.Windows.Controls.Primitives.Selector.SelectionChangedEvent, Array.Empty<object>(), Array.Empty<object>())); }
+    private void UseCommandExample_Click(object sender, RoutedEventArgs e) { if (CommandActionList.SelectedItem is CommandChoice choice) { ShowPage("Conversation"); ConversationInput.Text = choice.Ability.example; ConversationInput.Focus(); } }
     private void InitializeCommandLibrary()
     {
         CommandGroupsCombo.ItemsSource = Rules.Capabilities.Where(c => !c.hidden).Select(c => c.group).Distinct().ToArray();
@@ -103,6 +107,7 @@ public partial class LauncherWindow : Window
     private sealed record CommandChoice(Capability Ability)
     {
         public string Title => Ability.action switch {
+            "equip_weapon" => "Switch weapon", "block" => "Hold a guard", "parry" => "Attempt parries", "shoot" => "Shoot arrows", "focus_enemy" => "Focus an enemy", "combat_auto" => "Automatic combat", "repair_equipment" => "Repair equipment", "resume_task" => "Resume saved work",
             "summon" => "Join the fellowship", "dismiss" => "Dismiss companion", "follow" => "Follow me", "stay" => "Wait here",
             "return" => "Bring cargo back", "status" => "Check current work", "defend" => "Protect me",
             "lend_tools" => "Borrow work tools", "pickup_equip" => "Pick up and use equipment", "equip_gear" => "Borrow armour",
@@ -118,13 +123,13 @@ public partial class LauncherWindow : Window
     private void CommandGroup_Changed(object sender, SelectionChangedEventArgs e)
     {
         if (CommandActionList == null) return;
-        CommandActionList.ItemsSource = Rules.Capabilities.Where(c => !c.hidden && c.group == CommandGroupsCombo.SelectedItem?.ToString()).Select(c => new CommandChoice(c)).ToArray();
+        CommandActionList.ItemsSource = Rules.Capabilities.Where(c => !c.hidden && (string.IsNullOrWhiteSpace(CommandSearchBox.Text) ? c.group == CommandGroupsCombo.SelectedItem?.ToString() : (c.action + c.example + c.description + c.group).Contains(CommandSearchBox.Text, StringComparison.OrdinalIgnoreCase))).Select(c => new CommandChoice(c)).ToArray();
         CommandActionList.SelectedIndex = 0;
     }
 
     private void CommandAction_Changed(object sender, SelectionChangedEventArgs e)
     {
-        if (CommandActionList.SelectedItem is not CommandChoice choice) return;
+        if (CommandActionList.SelectedItem is not CommandChoice choice) { CommandTitle.Text = "No matching abilities"; CommandExample.Text = ""; CommandDescription.Text = "Try another item or action, such as weapon, blueprint or gather."; CommandHint.Text = ""; return; }
         CommandTitle.Text = choice.Title;
         CommandExample.Text = "“" + choice.Ability.example + "”";
         CommandDescription.Text = choice.Ability.description;
@@ -182,15 +187,25 @@ public partial class LauncherWindow : Window
         RefreshPlayCompanions(profiles, state);
     }
 
+    private bool healthCheckRunning;
+    private string localHealthMessage = "Checking Qwen…";
     private async Task RefreshHealth()
     {
-        bool local = await Ping((LocalServices.Brain + "/api/tags"));
+        if (healthCheckRunning) return;
+        healthCheckRunning = true;
+        try {
+        bool needsLocal = runtime.ShellAiMode != "chatgpt";
+        bool preview = Environment.GetCommandLineArgs().Contains("--wpf-preview");
+        var brainStatus = needsLocal && !preview ? await runtime.ShellEnsureLocalBrain(CancellationToken.None) : await LocalBrainService.Inspect(runtime.ShellLocalModel,CancellationToken.None);
+        localHealthMessage = brainStatus.Message;
+        bool local = brainStatus.Ready;
         bool voiceService = await Ping((LocalServices.Audio + "/"));
         bool expressiveVoice = runtime.ShellVoiceEngine == "kokoro" || await Ping((LocalServices.Expressive + "/"));
         string cloud;
         using (var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(3))) cloud = await runtime.ShellChatGptStatus(timeout.Token);
         if (!Dispatcher.CheckAccess()) { await Dispatcher.InvokeAsync(() => ApplyHealth(local, voiceService, expressiveVoice, cloud)); return; }
         ApplyHealth(local, voiceService, expressiveVoice, cloud);
+        } finally { healthCheckRunning = false; }
     }
 
     private async Task<bool> Ping(string address)
@@ -203,7 +218,7 @@ public partial class LauncherWindow : Window
         ValheimReady.Text = File.Exists(runtime.ShellGamePath) ? "●  Ready" : "●  Locate game";
         ValheimReady.Foreground = File.Exists(runtime.ShellGamePath) ? (WpfBrush)FindResource("Green") : (WpfBrush)FindResource("Gold");
         bool fullCloud = runtime.ShellAiMode == "chatgpt";
-        LocalReady.Text = fullCloud ? "—  Not used" : local ? "●  " + runtime.ShellLocalModel + " running" : "●  Required but unavailable";
+        LocalReady.Text = fullCloud ? "—  Not used" : "●  " + localHealthMessage;
         LocalReady.Foreground = fullCloud ? (WpfBrush)FindResource("Muted") : local ? (WpfBrush)FindResource("Green") : new SolidColorBrush(WpfColor.FromRgb(198, 102, 82));
         CloudReady.Text = "●  " + cloud;
         CloudReady.Foreground = cloud == "Connected" ? (WpfBrush)FindResource("Green") : (WpfBrush)FindResource("Gold");
@@ -216,7 +231,7 @@ public partial class LauncherWindow : Window
         SidebarLocal.Text = fullCloud ? "Qwen brain · Not used" : local ? runtime.ShellLocalModel + " Qwen brain" : "Qwen brain unavailable";
         SidebarCloud.Text = runtime.ShellAiMode == "local" ? "ChatGPT · Off" : "ChatGPT · " + cloud;
         SettingsChatStatus.Text = (fullCloud ? "ChatGPT brain · conversation & commands" : runtime.ShellAiMode == "hybrid" ? "ChatGPT brain · commands only" : "ChatGPT brain · off") + " · " + cloud + (string.IsNullOrWhiteSpace(runtime.ShellChatGptModel) ? " · account default model" : " · " + runtime.ShellChatGptModel);
-        SettingsLocalStatus.Text = fullCloud ? "Qwen brain · not used · voice stays local" : (runtime.ShellAiMode == "hybrid" ? "Qwen brain · conversation" : "Qwen brain · conversation & commands") + " · " + runtime.ShellLocalModel + (local ? " · running" : " · unavailable");
+        SettingsLocalStatus.Text = fullCloud ? "Qwen brain · not used · voice stays local" : (runtime.ShellAiMode == "hybrid" ? "Qwen brain · conversation" : "Qwen brain · conversation & commands") + " · " + localHealthMessage;
         SettingsAudioStatus.Text = "Selected voice · " + runtime.ShellVoiceRoute + " · Output · " + (string.IsNullOrWhiteSpace(runtime.ShellOutputDevice) ? "system default" : runtime.ShellOutputDevice) + " · Recognition " + runtime.ShellLanguage.ToUpperInvariant();
     }
 
@@ -262,6 +277,7 @@ public partial class LauncherWindow : Window
         draftVoiceChoices.Clear();
         RefreshVoiceChoices(profile.Voice);
         RoleCombo.SelectedItem = profile.Role; CombatCombo.SelectedItem = profile.CombatStyle; FrequencyCombo.SelectedItem = profile.ConversationFrequency;
+        TrackCompanionCheck.IsChecked = profile.ShowOnMap;
         StoredMaterialsCheck.IsChecked = profile.UseStoredMaterials; CraftBuildCheck.IsChecked = profile.CraftAndBuild; CookSortCheck.IsChecked = profile.CookAndSort; BossFightCheck.IsChecked = profile.JoinBossFights;
         loadingProfile = false; CompanionNotice.Text = ""; UpdatePersonalityCount(); UpdateProfileCapabilities(); UpdatePortrait();
     }
@@ -276,7 +292,7 @@ public partial class LauncherWindow : Window
             Voice = voiceIds[Math.Max(0, VoiceCombo.SelectedIndex)],
             Personality = PersonalityBox.Text, Traits = Array.Empty<string>(),
             Role = RoleCombo.SelectedItem?.ToString() ?? "Balanced companion", CombatStyle = CombatCombo.SelectedItem?.ToString() ?? "Balanced", ConversationFrequency = FrequencyCombo.SelectedItem?.ToString() ?? "Natural",
-            UseStoredMaterials = StoredMaterialsCheck.IsChecked == true, CraftAndBuild = CraftBuildCheck.IsChecked == true, CookAndSort = CookSortCheck.IsChecked == true, JoinBossFights = BossFightCheck.IsChecked == true
+            ShowOnMap = TrackCompanionCheck.IsChecked == true, UseStoredMaterials = StoredMaterialsCheck.IsChecked == true, CraftAndBuild = CraftBuildCheck.IsChecked == true, CookAndSort = CookSortCheck.IsChecked == true, JoinBossFights = BossFightCheck.IsChecked == true
         };
     }
 
@@ -357,22 +373,23 @@ public partial class LauncherWindow : Window
         selectedMod = null;
         string search = ModsSearchBox.Text ?? ""; int filter = ModsFilterCombo.SelectedIndex;
         IEnumerable<ModRow> rows;
-        if (browsingMods) rows = catalogMods.Where(c => (c.Name + c.Id + c.Description).Contains(search, StringComparison.OrdinalIgnoreCase)).OrderBy(c => c.Deprecated).ThenBy(c => c.Name).Take(500).Select(c => {
+        if (browsingMods) rows = (UseNexus ? Enumerable.Empty<CatalogMod>() : catalogMods).Where(c => (c.Name + c.Id + c.Description).Contains(search, StringComparison.OrdinalIgnoreCase)).OrderBy(c => c.Deprecated).ThenBy(c => c.Name).Take(500).Select(c => {
             var installed = installedMods.FirstOrDefault(m => m.Id == c.Id); bool update = installed != null && ModCatalog.IsNewer(installed.Version, c.Version);
             return new ModRow { Id = c.Id, Name = c.Name, InstalledVersion = installed?.Version ?? "—", LatestVersion = c.Version, State = update ? "Update available" : installed != null ? (installed.Enabled ? "Installed · enabled" : "Installed · disabled") : c.Deprecated ? "Deprecated" : "Available", Catalog = c, Installed = installed };
         });
         else rows = installedMods.Where(m => (m.Name + m.Id).Contains(search, StringComparison.OrdinalIgnoreCase) && (filter == 0 || filter == 1 && m.Enabled || filter == 2 && !m.Enabled || filter == 3 && catalogMods.Any(c => c.Id == m.Id && ModCatalog.IsNewer(m.Version, c.Version)))).OrderBy(m => m.Name).Select(m => {
-            var available = catalogMods.FirstOrDefault(c => c.Id == m.Id); bool update = available != null && ModCatalog.IsNewer(m.Version, available.Version);
-            return new ModRow { Id = m.Id, Name = m.Name, InstalledVersion = m.Version, LatestVersion = available?.Version ?? "—", State = update ? "Update available" : m.Enabled ? "Enabled" : "Disabled", Installed = m, Catalog = available };
+            var available = UseNexus ? null : catalogMods.FirstOrDefault(c => c.Id == m.Id); bool update = available != null && ModCatalog.IsNewer(m.Version, available.Version);
+            return new ModRow { Id = m.Id, Name = m.Name, InstalledVersion = m.Version, LatestVersion = UseNexus ? "On website" : NexusMods.IsNexus(m.Id) ? "Not checked" : available?.Version ?? "—", State = (update ? "Update available" : m.Enabled ? "Enabled" : "Disabled"), Installed = m, Catalog = available };
         });
         ModsList.ItemsSource = rows.ToArray();
         int enabled = installedMods.Count(m => m.Enabled); bool plan = installedMods.Any(m => m.Enabled && m.Id.Contains("PlanBuild", StringComparison.OrdinalIgnoreCase));
-        int updates = AvailableUpdates().Count;
+        int updates = UseNexus ? 0 : AvailableUpdates().Count;
         string issue = installedMods.Where(m => m.Enabled).Select(m => ModProfiles.DependencyError(installedMods, m, true)).FirstOrDefault(x => x.Length > 0) ?? "";
-        ProfileHealthText.Text = enabled + " mods enabled · " + updates + " updates · PlanBuild " + (plan ? "ready" : "not enabled") + " · " + (issue.Length == 0 ? "No dependency conflicts detected" : issue);
-        ModNoticeText.Text = browsingMods
-            ? catalogMods.Count == 0 ? "Loading the Thunderstore catalogue…" : catalogMods.Count + " downloads available · installs into " + profile.Label
-            : installedMods.Count + " mods in " + profile.Label + (updates > 0 ? " · " + updates + " updates available" : " · up to date");
+        ProfileHealthText.Text = enabled + " mods enabled · PlanBuild " + (plan ? "ready" : "not enabled") + " · " + (issue.Length == 0 ? "No known dependency conflicts" : issue);
+        ModNoticeText.Text = UseNexus
+            ? (browsingMods ? "Nexus downloads import into " + profile.Label : installedMods.Count + " mods in " + profile.Label) + " · Check dependencies and updates on the website."
+            : browsingMods ? (catalogMods.Count == 0 ? "Refresh the catalogue to browse downloads." : catalogMods.Count + " downloads available · installs into " + profile.Label)
+            : installedMods.Count + " mods in " + profile.Label + " · " + updates + " known updates" + (installedMods.Any(m=>NexusMods.IsNexus(m.Id)) ? " · Imported ZIP versions are not checked automatically" : "");
         ModsNav.Content = updates > 0 ? "◆   Mods  ·  " + updates : "◆   Mods";
         UpdateModButtons();
     }
@@ -384,18 +401,21 @@ public partial class LauncherWindow : Window
         bool hasProfile = ModsProfileCombo.SelectedItem is ProfileChoice;
         RemoveProfileButton.IsEnabled = hasProfile;
         ExportProfileButton.IsEnabled = hasProfile;
+
         InstallRequirementsButton.IsEnabled = hasProfile && !installingRequirements;
-        InstallModButton.IsEnabled = browsingMods && hasProfile && selectedMod?.Catalog != null;
+        InstallModButton.IsEnabled = browsingMods && hasProfile && (UseNexus || selectedMod?.Catalog != null);
         ToggleModButton.IsEnabled = !browsingMods && hasProfile && selectedMod?.Installed != null;
         RemoveModButton.IsEnabled = !browsingMods && hasProfile && selectedMod?.Installed != null && selectedMod.Installed.Id != "RuneCompanion";
         EditConfigButton.IsEnabled = !browsingMods && hasProfile && selectedMod?.Installed != null;
         ModWebsiteButton.IsEnabled = selectedMod != null; ProfileModWebsiteButton.IsEnabled = selectedMod != null && selectedMod.Id != "RuneCompanion";
-        UpdateAllButton.IsEnabled = !browsingMods && hasProfile && AvailableUpdates().Count > 0;
+        UpdateAllButton.IsEnabled = !browsingMods && hasProfile && (UseNexus || AvailableUpdates().Count > 0);
     }
 
     private void RefreshSettings()
     {
         loadingSettings = true;
+        ModSourceCombo.SelectedIndex = UseNexus ? 1 : 0;
+        ModSourceHelp.Text = UseNexus ? "Links open on Nexus; ZIP downloads and updates use its website. Required-mod setup uses Thunderstore." : "Links open on Thunderstore. Browse, install and update in Rune. Switching source keeps your installed mods.";
         bool fullChatGpt = runtime.ShellAiMode == "chatgpt";
         AiModeCombo.SelectedIndex = fullChatGpt ? 2 : runtime.ShellAiMode == "hybrid" ? 1 : 0;
         AiModeHelp.Text = fullChatGpt
@@ -427,8 +447,9 @@ public partial class LauncherWindow : Window
 
     internal void ShowPreviewPage(string page)
     {
-        ShowPage(page == "ModsBrowse" ? "Mods" : page == "PlayStatus" ? "Play" : page == "CompanionsTest" ? "Companions" : page);
+        ShowPage(page is "ModsBrowse" or "Dropdown" ? "Mods" : page == "PlayStatus" ? "Play" : page == "CompanionsTest" ? "Companions" : page);
         if (page == "ModsBrowse") SetModsMode(true);
+        if (page == "Dropdown") ModsProfileCombo.IsDropDownOpen = true;
         if (page == "PlayStatus") ApplyHealth(true, true, true, "Connected");
         if (page == "CompanionsTest") { TestVoiceButton.Content = "Stop"; CompanionNotice.Text = "Preparing Chatterbox Turbo… First use can take about 30 seconds. The personality sample is available in Conversation."; }
     }
@@ -444,7 +465,7 @@ public partial class LauncherWindow : Window
         foreach (var button in new[] { PlayNav, CompanionsNav, ConversationNav, CommandsNav, ModsNav, SettingsNav }) button.Style = (Style)FindResource(button.Tag?.ToString() == page ? "SelectedNavButton" : "NavButton");
         if (page == "Conversation") { ConversationTranscript.ScrollToEnd(); ConversationInput.Focus(); }
         if (page == "Companions") RefreshProfiles();
-        if (page == "Mods") { RefreshModProfiles(); _ = EnsureCatalogFresh(); }
+        if (page == "Mods") { RefreshModProfiles(); if (!UseNexus) _ = EnsureCatalogFresh(); }
         if (page == "Settings") { RefreshSettings(); _ = RefreshHealth(); }
     }
 
@@ -499,6 +520,15 @@ public partial class LauncherWindow : Window
         catch (Exception ex) { ShowRuneMessage(ex.Message, "Could not remove companion"); }
     }
     private async void SummonCompanion_Click(object sender, RoutedEventArgs e) { if (selectedProfile == null) return; try { await runtime.ShellSaveProfile(DraftProfile()); await runtime.ShellSummon(selectedProfile.Id); CompanionNotice.Text = "Summon request sent."; } catch (Exception ex) { CompanionNotice.Text = ex.Message; } }
+    private async void UnsummonCompanion_Click(object sender, RoutedEventArgs e)
+    {
+        if (selectedProfile == null) return;
+        string id = selectedProfile.Id;
+        UnsummonCompanionButton.IsEnabled = false;
+        try { string result = await runtime.ShellUnsummon(id); if (selectedProfile?.Id == id) CompanionNotice.Text = result; }
+        catch (Exception ex) { if (selectedProfile?.Id == id) CompanionNotice.Text = ex.Message; }
+        finally { UnsummonCompanionButton.IsEnabled = true; }
+    }
     private async void TestVoice_Click(object sender, RoutedEventArgs e)
     {
         if (voicePreview != null) { voicePreview.Cancel(); return; }
@@ -526,7 +556,7 @@ public partial class LauncherWindow : Window
     private void ModsSearchBox_TextChanged(object sender, TextChangedEventArgs e) { if (ModsList != null) RefreshModsList(); }
     private void ModsFilterCombo_SelectionChanged(object sender, SelectionChangedEventArgs e) { if (!loadingMods && ModsList != null) RefreshModsList(); }
     private void ModsList_SelectionChanged(object sender, SelectionChangedEventArgs e) { selectedMod = ModsList.SelectedItem as ModRow; string[] dependencies = selectedMod?.Catalog?.Dependencies ?? selectedMod?.Installed?.Dependencies ?? Array.Empty<string>(); ModDetailsText.Text = selectedMod == null ? "" : selectedMod.Id + (dependencies.Length > 0 ? " · Requires " + string.Join(", ", dependencies) : selectedMod.Catalog?.Description is string d ? " · " + d : ""); UpdateModButtons(); }
-    private async void RefreshCatalog_Click(object sender, RoutedEventArgs e) => await RefreshCatalog();
+    private async void RefreshCatalog_Click(object sender, RoutedEventArgs e) { if (UseNexus) OpenModCatalogue(); else await RefreshCatalog(); }
     private void MyProfileMode_Click(object sender, RoutedEventArgs e)
     {
         SetModsMode(false);
@@ -534,8 +564,8 @@ public partial class LauncherWindow : Window
     private async void BrowseMode_Click(object sender, RoutedEventArgs e)
     {
         SetModsMode(true);
-        if (catalogMods.Count == 0) await RefreshCatalog();
-        ModsSearchBox.Focus();
+        if (!UseNexus && catalogMods.Count == 0) await RefreshCatalog();
+        if (!UseNexus) ModsSearchBox.Focus();
     }
     private void SetModsMode(bool browse)
     {
@@ -547,9 +577,23 @@ public partial class LauncherWindow : Window
         BrowseModActions.Visibility = browse ? Visibility.Visible : Visibility.Collapsed;
         ProfileModFooter.Visibility = browse ? Visibility.Collapsed : Visibility.Visible;
         BrowseModFooter.Visibility = browse ? Visibility.Visible : Visibility.Collapsed;
-        ModsModeTitle.Text = browse ? "Thunderstore downloads" : "Installed in this profile";
-        ModsModeHelp.Text = browse ? "Search online. Downloads install into the profile selected above." : "Select a mod to configure, update, disable, or remove it.";
+        ModsModeTitle.Text = browse ? ModSources.Label(runtime.ShellModSource) + " downloads" : "Installed in this profile";
+        ModsModeHelp.Text = browse ? (UseNexus ? "Download on the website, then import into the profile selected above." : "Search online. Downloads install into the profile selected above.") : "Select a mod to configure, update, disable, or remove it. Pages open on " + ModSources.Label(runtime.ShellModSource) + ".";
         ModsSearchLabel.Text = browse ? "Search Thunderstore" : "Search this profile";
+        ModsSearchBox.IsEnabled = !(browse && UseNexus);
+        ModsSearchBox.Visibility = browse && UseNexus ? Visibility.Hidden : Visibility.Visible;
+        ModWebsiteButton.Visibility = UseNexus ? Visibility.Collapsed : Visibility.Visible;
+        ModsSearchLabel.Text = browse && UseNexus ? "Browse using Open catalogue" : ModsSearchLabel.Text;
+        ModsList.Visibility = browse && UseNexus ? Visibility.Collapsed : Visibility.Visible;
+        NexusBrowsePanel.Visibility = browse && UseNexus ? Visibility.Visible : Visibility.Collapsed;
+        RefreshSourceButton.Content = UseNexus ? "Open catalogue" : "Refresh online";
+        InstallModButton.Content = UseNexus ? "Import ZIP" : "Install selected";
+        UpdateAllButton.Content = UseNexus ? "Check updates" : "Update all";
+        int filter = ModsFilterCombo.SelectedIndex;
+        loadingMods = true;
+        ModsFilterCombo.ItemsSource = UseNexus ? new[] { "All mods", "Enabled", "Disabled" } : new[] { "All mods", "Enabled", "Disabled", "Updates available" };
+        ModsFilterCombo.SelectedIndex = Math.Clamp(filter,0,UseNexus ? 2 : 3);
+        loadingMods = false;
         ModsSearchBox.Clear(); RefreshModsList();
     }
     private async Task RefreshCatalog()
@@ -557,7 +601,7 @@ public partial class LauncherWindow : Window
         if (catalogRefreshRunning) return;
         catalogRefreshRunning = true;
         ModNoticeText.Text = "Refreshing Thunderstore catalogue…";
-        try { catalogMods = await ModCatalog.Refresh(runtime.ShellModsRoot, new Progress<string>(s => Dispatcher.Invoke(() => ModNoticeText.Text = s)), CancellationToken.None); RefreshModsList(); ModNoticeText.Text = catalogMods.Count + " packages available. Update check complete."; }
+        try { catalogMods = await ModCatalog.Refresh(runtime.ShellModsRoot, new Progress<string>(s => Dispatcher.Invoke(() => ModNoticeText.Text = s)), CancellationToken.None); RefreshModsList(); if (!UseNexus) ModNoticeText.Text = catalogMods.Count + " packages available. Update check complete."; }
         catch (Exception ex) { ModNoticeText.Text = "Catalogue unavailable: " + ex.Message; }
         finally { catalogRefreshRunning = false; }
     }
@@ -567,6 +611,7 @@ public partial class LauncherWindow : Window
     }
     private async void InstallMod_Click(object sender, RoutedEventArgs e)
     {
+        if (UseNexus) { ImportNexus_Click(sender,e); return; }
         if (selectedMod == null || ModsProfileCombo.SelectedItem is not ProfileChoice p) return;
         if (catalogMods.Count == 0) await RefreshCatalog();
         var mod = selectedMod.Catalog ?? catalogMods.FirstOrDefault(c => c.Id == selectedMod.Id); if (mod == null) { ModNoticeText.Text = "No online package found for this mod."; return; }
@@ -576,9 +621,10 @@ public partial class LauncherWindow : Window
     }
     private async void UpdateAllMods_Click(object sender, RoutedEventArgs e)
     {
+        if (UseNexus) { if (selectedMod != null && selectedMod.Id != "RuneCompanion") OpenPreferredModPage(selectedMod.Id,selectedMod.Name); else OpenModCatalogue(); return; }
         if (ModsProfileCombo.SelectedItem is not ProfileChoice p) return;
         if (catalogMods.Count == 0) await RefreshCatalog();
-        var updates = AvailableUpdates(); if (updates.Count == 0) { ModNoticeText.Text = "Everything in this profile is up to date."; return; }
+        var updates = AvailableUpdates(); if (updates.Count == 0) { ModNoticeText.Text = "No known Thunderstore updates. Check Nexus mods using Open selected page and import a newer ZIP to update."; return; }
         ModNoticeText.Text = "Updating " + updates.Count + " mods with their dependencies…";
         try { await OwnedMods.Install(p.Path, ModCatalog.WithProfileFoundation(updates, catalogMods, installedMods), catalogMods, new Progress<string>(s => Dispatcher.Invoke(() => ModNoticeText.Text = s)), CancellationToken.None); RefreshModsList(); ModNoticeText.Text = updates.Count + " mods updated."; }
         catch (Exception ex) { ModNoticeText.Text = ex.Message; }
@@ -601,19 +647,17 @@ public partial class LauncherWindow : Window
         if (ModsProfileCombo.SelectedItem is not ProfileChoice profile || selectedMod?.Installed is not InstalledMod mod) { ModNoticeText.Text = "Select an installed mod first."; return; }
         runtime.ShellOpenModConfigs(profile.Path, mod.Id);
     }
+    private void TrackCompanionCheck_Changed(object sender, RoutedEventArgs e) { if (!loadingProfile && selectedProfile != null) { bool value=TrackCompanionCheck.IsChecked==true; runtime.ShellSetCompanionTracking(selectedProfile.Id,value); selectedProfile.ShowOnMap=value; CompanionNotice.Text=value ? "Map tracking enabled for this companion." : "Map tracking disabled for this companion."; } }
     private void VoiceVolume_Click(object sender, RoutedEventArgs e)
     {
         CreateVoiceVolumeWindow().ShowDialog(); RefreshSettings();
     }
     private void OpenThunderstore_Click(object sender, RoutedEventArgs e)
     {
-        string id = selectedMod?.Id ?? "";
-        if (id.Length == 0 || id == "RuneCompanion") { ModNoticeText.Text = "Select a Thunderstore mod first."; return; }
-        string[] parts = id.Split('-', 2);
-        string url = selectedMod?.Catalog?.Website ?? (parts.Length == 2 ? "https://thunderstore.io/c/valheim/p/" + Uri.EscapeDataString(parts[0]) + "/" + Uri.EscapeDataString(parts[1]) + "/" : "");
-        if (!Uri.TryCreate(url, UriKind.Absolute, out var uri) || uri.Scheme != "https" || !(uri.Host == "thunderstore.io" || uri.Host.EndsWith(".thunderstore.io", StringComparison.OrdinalIgnoreCase))) { ModNoticeText.Text = "That package does not have a valid Thunderstore page."; return; }
-        Process.Start(new ProcessStartInfo(uri.AbsoluteUri) { UseShellExecute = true });
+        if (selectedMod == null || selectedMod.Id == "RuneCompanion") return;
+        OpenPreferredModPage(selectedMod.Id, selectedMod.Name);
     }
+
     private void LocateValheim_Click(object sender, RoutedEventArgs e) { var picker = new WpfOpenFileDialog { Filter = "Valheim|valheim.exe", FileName = "valheim.exe" }; if (picker.ShowDialog(this) == true) { runtime.ShellSetGamePath(picker.FileName); _ = RefreshHealth(); } }
     private bool installingRequirements;
     private async Task InstallRuneRequirements(ProfileChoice profile)
@@ -630,20 +674,20 @@ public partial class LauncherWindow : Window
             SetModsMode(false); RefreshModsList();
             ModNoticeText.Text = "Rune requirements installed and enabled in " + profile.Label + ". You can now Start modded.";
         } catch (Exception ex) {
-            ModNoticeText.Text = "Setup did not finish for " + profile.Label + ": " + ex.Message + " Your profile is kept; use Install Rune requirements to retry.";
+            ModNoticeText.Text = "Setup did not finish for " + profile.Label + ": " + ex.Message + " Your profile is kept; use Set up required mods to retry.";
         } finally { installingRequirements = false; ModsPage.IsEnabled = true; UpdateModButtons(); }
     }
     private async void InstallRequirements_Click(object sender, RoutedEventArgs e)
     {
-        if (ModsProfileCombo.SelectedItem is ProfileChoice profile) await InstallRuneRequirements(profile);
+        if (ModsProfileCombo.SelectedItem is ProfileChoice profile && ConfirmRequiredModSource()) await InstallRuneRequirements(profile);
     }
     private async void NewProfile_Click(object sender, RoutedEventArgs e)
     {
-        string? name = Prompt("New Rune mod profile · required mods download automatically", "New fellowship");
+        string? name = Prompt("New Rune mod profile", "New fellowship");
         if (name == null) return;
         try {
             string path = runtime.ShellCreateModProfile(name); RefreshModProfiles();
-            await InstallRuneRequirements(new ProfileChoice(path, name));
+            if (ConfirmRequiredModSource()) await InstallRuneRequirements(new ProfileChoice(path, name));
         } catch (Exception ex) { loadingMods = false; ModNoticeText.Text = ex.Message; }
     }
     private void ImportProfile_Click(object sender, RoutedEventArgs e) { var picker = new OpenFolderDialog { Title = "Choose a profile containing BepInEx" }; if (picker.ShowDialog(this) != true) return; string? name = Prompt("Name the independent copy", Path.GetFileName(picker.FolderName)); if (name == null) return; try { runtime.ShellImportModProfile(picker.FolderName, name); RefreshModProfiles(); } catch (Exception ex) { ModNoticeText.Text = ex.Message; } }
@@ -693,10 +737,11 @@ public partial class LauncherWindow : Window
     }
 
     private void ChatGptSettings_Click(object sender, RoutedEventArgs e) { runtime.ShellOpenChatGpt(); _ = RefreshHealth(); }
-    private void AiModeCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    private async void AiModeCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (loadingSettings || AiModeCombo.SelectedItem is not ComboBoxItem item || item.Tag is not string mode) return;
-        runtime.ShellSetAiMode(mode); RefreshVoiceChoices();
+        runtime.ShellSetAiMode(mode); RefreshSettings(); RefreshVoiceChoices();
+        if (mode != "chatgpt") { localHealthMessage = "Starting Qwen…"; LocalReady.Text = "●  " + localHealthMessage; await runtime.ShellEnsureLocalBrain(CancellationToken.None); }
         if (selectedProfile != null) LoadProfile(runtime.ShellProfiles().FirstOrDefault(p => p.Id == selectedProfile.Id) ?? selectedProfile);
         _ = RefreshHealth();
     }

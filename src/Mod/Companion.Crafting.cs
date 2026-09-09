@@ -161,7 +161,7 @@ namespace Rune.Mod
             try {
                 boat = UnityEngine.Object.Instantiate(craftPlan.Boat, location, Quaternion.LookRotation(forward));
                 if (!boat.GetComponent<ZNetView>().IsValid()) throw new InvalidOperationException("Boat network object unavailable.");
-                boat.GetComponent<Piece>().SetCreator(Owner);
+                boat.GetComponent<Piece>().AssignCreator(Owner);
                 string name = craftPlan.Name; SetQuestStatus("Complete", "Boat built."); craftPlan = null; mode = "stay"; anchor = transform.position; Save(); Say("Built " + name + " in the water ahead. All recipe ingredients were consumed.");
             } catch (Exception e) { if (boat) ZNetScene.instance.Destroy(boat); RestoreIngredients(ingredients); BlockCraft("Boat placement failed: " + e.Message); }
         }

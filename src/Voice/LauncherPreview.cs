@@ -35,6 +35,15 @@ internal static class LauncherPreview
         bitmap.Render(target);
         var encoder = new PngBitmapEncoder(); encoder.Frames.Add(BitmapFrame.Create(bitmap));
         using (var stream = File.Create(output)) encoder.Save(stream);
+        if (page == "Dropdown") {
+            var combo=(System.Windows.Controls.ComboBox)window.FindName("ModsProfileCombo");
+            var popup=(System.Windows.Controls.Primitives.Popup)combo.Template.FindName("PART_Popup",combo);
+            if(popup.Child is System.Windows.FrameworkElement child) {
+                child.UpdateLayout();
+                var list=new RenderTargetBitmap((int)Math.Ceiling(child.ActualWidth),(int)Math.Ceiling(child.ActualHeight),96,96,PixelFormats.Pbgra32);list.Render(child);
+                var file=new PngBitmapEncoder();file.Frames.Add(BitmapFrame.Create(list));using(var stream=File.Create(output+".popup.png"))file.Save(stream);
+            }
+        }
         if (target != window) target.Close();
         window.Close();
         if (!runtime.IsDisposed) runtime.Close();

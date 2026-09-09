@@ -48,7 +48,7 @@ def core():
     plugin = CORE/'payload/BepInEx/plugins/RuneCompanion'; plugin.mkdir(parents=True)
     shutil.copy2(HERE/'plugin/RuneCompanion.dll', plugin)
     copy_tree(HERE.parent/'blueprint-library', CORE/'blueprint-library')
-    for name in ['Start Rune.ps1', 'Setup Rune.ps1', 'Stop Rune services.ps1', 'package_tools.py', 'Verify Rune.ps1', 'Rollback Rune.ps1', 'Uninstall Rune.ps1']:
+    for name in ['Start Rune.ps1', 'Service Ports.ps1', 'Setup Rune.ps1', 'Stop Rune services.ps1', 'package_tools.py', 'Verify Rune.ps1', 'Rollback Rune.ps1', 'Uninstall Rune.ps1']:
         shutil.copy2(HERE/name, CORE/name)
     shutil.copy2(SOURCE/'Open Rune.exe', CORE/'Open Rune.exe')
     for name in ['Setup', 'Verify', 'Rollback', 'Uninstall']:

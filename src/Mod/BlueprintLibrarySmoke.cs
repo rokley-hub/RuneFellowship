@@ -85,7 +85,7 @@ namespace Rune.Mod
                     foreach (var id in new[] { "piece_chest_wood", "piece_stonecutter" }) {
                         if (id == "piece_stonecutter" && name.StartsWith("Camp")) continue;
                         var fixture = UnityEngine.Object.Instantiate(ZNetScene.instance.GetPrefab(id), site + new Vector3(-7, 0, id.Contains("chest") ? -3 : 3), Quaternion.identity).GetComponent<Piece>();
-                        fixture.SetCreator(player.GetPlayerID()); fixtures.Add(fixture.GetInstanceID());
+                        fixture.AssignCreator(player.GetPlayerID()); fixtures.Add(fixture.GetInstanceID());
                         if (id.Contains("chest")) supplies = fixture.GetComponent<Container>();
                     }
                     report.Add(name + " parsed: " + entries.Count + " pieces; materials=" + string.Join(",", expected.Select(k => k.Key + ":" + k.Value)));

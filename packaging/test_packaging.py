@@ -63,4 +63,15 @@ class PackagingTests(unittest.TestCase):
   archive.write_bytes(b'bad')
   with self.assertRaises(ValueError):p.install_pack(self.target,'test',archive)
 
+ def test_speech_pack_installs_without_changing_preferences(self):
+  self.old();archive=self.root/'speech.zip';content=b'model fixture'
+  row={'path':'runtime/kokoro/model.bin','bytes':len(content),'sha256':p.hashlib.sha256(content).hexdigest()}
+  with zipfile.ZipFile(archive,'w') as z:
+   z.writestr('pack.json',json.dumps({'format':1,'pack':'speech-core','files':[row]}));z.writestr(row['path'],content)
+  (self.target/'packs.json').write_text(json.dumps({'speech-core':{'bytes':archive.stat().st_size,'sha256':p.sha(archive),'unpackedBytes':len(content)}}))
+  p.install_pack(self.target,'speech-core',archive)
+  self.assertEqual((self.target/row['path']).read_bytes(),content)
+  self.assertEqual((self.target/'bridge/preferences.json').read_text(),'personal settings')
+  self.assertEqual(list(self.target.glob('.pack-stage-*')),[])
+
 if __name__=='__main__':unittest.main(verbosity=2)

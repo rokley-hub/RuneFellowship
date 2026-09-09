@@ -23,8 +23,8 @@ namespace Rune.Mod
             Utils.SetSaveDataPath(saveRoot);
             yield return new WaitForSecondsRealtime(12);
             string expectedRoot = Path.GetFullPath(saveRoot).TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar;
-            if (!Path.GetFullPath(World.GetWorldSavePath(FileHelpers.FileSource.Local)).StartsWith(expectedRoot, StringComparison.OrdinalIgnoreCase)
-                || !Path.GetFullPath(PlayerProfile.GetCharacterFolderPath(FileHelpers.FileSource.Local)).StartsWith(expectedRoot, StringComparison.OrdinalIgnoreCase)) {
+            if (!Path.GetFullPath(GameCompatibility.WorldSavePath()).StartsWith(expectedRoot, StringComparison.OrdinalIgnoreCase)
+                || !Path.GetFullPath(GameCompatibility.CharacterSavePath()).StartsWith(expectedRoot, StringComparison.OrdinalIgnoreCase)) {
                 File.WriteAllText(output, "Refused: game save paths are not isolated."); Application.Quit(); yield break;
             }
             var report = new List<string>();
@@ -48,6 +48,7 @@ namespace Rune.Mod
             Vector3 center = player.transform.position;
             Heightmap.GetHeight(center, out float ground); center.y = ground + 1;
             player.transform.position = center;
+            if (Environment.GetEnvironmentVariable("RUNE_ROSTER_SMOKE") == "1") { yield return RosterSmoke.Run(plugin,player,output); yield break; }
             if (Environment.GetEnvironmentVariable("RUNE_RELIABILITY_SMOKE") == "1") {
                 yield return ReliabilitySmoke.Run(plugin, player, output + ".reliability.txt");
                 if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable("RUNE_BLUEPRINT_LIBRARY_SMOKE"))) { Application.Quit(); yield break; }
@@ -111,7 +112,7 @@ namespace Rune.Mod
                 var restored = new Inventory("smoke", null, 8, 4); restored.Load(new ZPackage(saved.GetArray()));
                 report.Add("Inventory persistence: before=" + before + "; restored=" + restored.NrOfItems());
                 player.transform.position = center; npc.Order("set_base", 20);
-                var chestObject = UnityEngine.Object.Instantiate(ZNetScene.instance.GetPrefab("piece_chest_wood"), center + Vector3.forward * 3, Quaternion.identity); chestObject.GetComponent<Piece>().SetCreator(player.GetPlayerID());
+                var chestObject = UnityEngine.Object.Instantiate(ZNetScene.instance.GetPrefab("piece_chest_wood"), center + Vector3.forward * 3, Quaternion.identity); chestObject.GetComponent<Piece>().AssignCreator(player.GetPlayerID());
                 var chest = chestObject.GetComponent<Container>(); var item = inv.GetAllItems().Find(i => i.m_dropPrefab && i.m_dropPrefab.name == "Wood");
                 report.Add("Chest access=" + AccessTools.Method(typeof(Companion), "CanChest").Invoke(npc, new object[] { chest }) + "; baseDistance=" + Vector3.Distance(center, player.transform.position));
                 bool moved = (bool)AccessTools.Method(typeof(Companion), "Transfer").Invoke(npc, new object[] { inv, chest.GetInventory(), item, 3, null, chest });

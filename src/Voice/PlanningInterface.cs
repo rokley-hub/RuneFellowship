@@ -42,13 +42,14 @@ public sealed partial class RuneWindow
         using var dialog = new RunePopupForm { Text = "Local AI model", ClientSize = new Size(560, 310), StartPosition = FormStartPosition.CenterParent, BackColor = BackColor, Font = Font };
         var choice = new ComboBox { Location = new Point(24, 62), Width = 505, DropDownStyle = ComboBoxStyle.DropDownList };
         choice.Items.AddRange(new object[] { "Qwen3.5 4B · recommended while gaming", "Qwen3.5 9B · stronger, uses more memory" }); choice.SelectedIndex = brain.LocalModel.EndsWith("9b") ? 1 : 0;
-        var label = new Label { Location = new Point(24, 104), Size = new Size(505, 105), Text = "Your PC: RTX 3070 Ti, 8 GB graphics memory, 32 GB RAM.\n4B shares the GPU more comfortably with Valheim.\n9B is a separate 6.6 GB download and may run more slowly.\nBoth run locally without credits." };
+        var label = new Label { Location = new Point(24, 104), Size = new Size(505, 105), Text = "4B shares the GPU more comfortably with Valheim.\n9B is a separate 6.6 GB download and may run more slowly.\nBoth run locally without credits." };
         dialog.Controls.Add(new Label { Text = "Choose your local conversation model", Font = new Font("Segoe UI Semibold", 16), Location = new Point(24, 18), Size = new Size(510, 34) }); dialog.Controls.Add(choice); dialog.Controls.Add(label);
         var buttons = new FlowLayoutPanel { Location = new Point(24, 219), Size = new Size(510, 65) };
         using var http = new HttpClient { Timeout = TimeSpan.FromMinutes(30) }; using var lifetime = new CancellationTokenSource();
         AddButton(buttons, "Use model", async () => {
             try {
                 string model = choice.SelectedIndex == 0 ? "qwen3.5:4b" : "qwen3.5:9b";
+                await LocalBrainService.Ensure(Path.GetDirectoryName(bridge.Folder)!,model,lifetime.Token);
                 using var tags = await http.GetFromJsonAsync<JsonDocument>((LocalServices.Brain + "/api/tags"), lifetime.Token);
                 if (tags == null || !tags.RootElement.GetProperty("models").EnumerateArray().Any(m => m.GetProperty("name").GetString() == model)) { label.Text = "This model is not downloaded. Use Download selected model first.\nYour current model remains selected."; return; }
                 CancelTurn(); brain.LocalModel = model; SavePreferences(); dialog.Close();
@@ -58,6 +59,7 @@ public sealed partial class RuneWindow
             choice.Enabled = false; buttons.Enabled = false;
             try {
                 string model = choice.SelectedIndex == 0 ? "qwen3.5:4b" : "qwen3.5:9b";
+                await LocalBrainService.Ensure(Path.GetDirectoryName(bridge.Folder)!,model,lifetime.Token);
                 label.Text = "Downloading " + model + "… This can take several minutes.\nNo API key or credits are used. You can close this window to cancel.";
                 using var result = await http.PostAsJsonAsync((LocalServices.Brain + "/api/pull"), new { model, stream = false }, lifetime.Token); result.EnsureSuccessStatusCode();
                 if (!dialog.IsDisposed) label.Text = "Downloaded. Select Use model to switch.";

@@ -8,7 +8,7 @@ def main():
  if out.exists():raise RuntimeError('Use a new empty export directory')
  out.mkdir(parents=True)
  excluded={'bin','obj','__pycache__','.git','.codex','.agents'}
- allowed={'.cs','.csproj','.xaml','.png','.py','.ps1','.md','.json','.txt','.config','.blueprint'}
+ allowed={'.ico','.cs','.csproj','.xaml','.png','.py','.ps1','.md','.json','.txt','.config','.blueprint'}
  entries=[]
  for folder in ['src','tests','audio','blueprint-library']:
   for p in (project/folder).rglob('*'):
@@ -19,7 +19,10 @@ def main():
  for name in ['create-blueprints.py','check-blueprints.py']:entries.append((project/'tools'/name,Path('tools')/name))
  # Only authored packaging sources, not the staged app, downloaded archives or test data.
  for p in (project/'release').iterdir():
-  if p.is_file() and p.suffix in {'.py','.ps1','.md'}:entries.append((p,Path('packaging')/p.name))
+  if p.is_file() and p.suffix in {'.py','.ps1','.md','.cs'}:entries.append((p,Path('packaging')/p.name))
+ entries.append((project/'release/online-downloads.json',Path('packaging/online-downloads.json')))
+ for p in (project/'release/online-assets').iterdir():
+  if p.is_file() and p.suffix in {'.png','.md'}:entries.append((p,Path('packaging/online-assets')/p.name))
  for p in (project/'release/docs').glob('*.md'):entries.append((p,Path('docs')/p.name))
  entries += [(project/'NuGet.Config',Path('NuGet.Config')),(project/'Launcher.cs',Path('Launcher.cs'))]
  for p in (project/'release/public').iterdir():

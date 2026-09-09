@@ -16,7 +16,16 @@ public sealed partial class RuneWindow
     internal string ShellListeningStatus => listeningLabel.Text;
     internal string ShellConnectionStatus => connection.Text;
     internal string ShellProfilePath => preferences.ModProfilePath;
+    internal string ShellModSource => ModSources.Normalize(preferences.ModSource);
+    internal string? ShellModPage(string id) => ModSources.Page(ShellModSource,id,preferences.ModSourcePages);
+    internal void ShellSetModSource(string source) {preferences.ModSource=ModSources.Normalize(source);SavePreferences();}
+    internal void ShellSetModPage(string id,string url) {
+        if(!ModSources.ValidPage(ShellModSource,url))throw new IOException("Enter a Valheim mod page on "+ModSources.Label(ShellModSource)+".");
+        preferences.ModSourcePages[ShellModSource+":"+id]=url;SavePreferences();
+    }
     internal string ShellGamePath => preferences.GamePath;
+    internal Task<LocalBrainService.Status> ShellEnsureLocalBrain(CancellationToken token) => LocalBrainService.Ensure(Path.GetDirectoryName(bridge.Folder)!, brain.LocalModel, token);
+    internal void ShellSetCompanionTracking(string id,bool value) { var profile=preferences.Profiles.FirstOrDefault(p=>p.Id==id); if(profile==null)return; profile.ShowOnMap=value; SavePreferences(); WriteVoiceState(); }
     internal string ShellLocalModel => brain.LocalModel;
     internal string ShellLanguage => preferences.Language;
     internal string ShellChatGptModel => preferences.ChatGptModel;
@@ -99,6 +108,15 @@ public sealed partial class RuneWindow
         else await Submit("summon");
     }
 
+    internal async Task<string> ShellUnsummon(string id)
+    {
+        if (!preferences.Profiles.Any(p => p.Id == id)) throw new InvalidOperationException("That companion profile no longer exists.");
+        SelectCompanion(id);
+        var reply = await bridge.Send(new Command { action = "dismiss" }, turn.Token);
+        AddLine("Companion", reply.message);
+        return reply.message;
+    }
+
     internal async Task<string> ShellPreviewVoice(CompanionProfile draft, CancellationToken cancellation, Action<string>? progress = null)
     {
         cancellation.ThrowIfCancellationRequested();
@@ -134,6 +152,7 @@ public sealed partial class RuneWindow
 
     internal void ShellLaunchValheim(bool modded) => LaunchValheim(modded);
     internal void ShellToggleMicrophoneMute() => ToggleMicrophoneMute();
+    internal event Action? ShellCommandsRequested;
     internal void ShellOpenCommands() => ShowCommands();
     internal void ShellOpenPlan() => OpenPlan();
     internal void ShellOpenChatGpt() => ShowChatGptSettings();

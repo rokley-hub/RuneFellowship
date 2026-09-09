@@ -29,11 +29,11 @@ namespace Rune.Mod
                 var go = UnityEngine.Object.Instantiate(ZNetScene.instance.GetPrefab(Plugin.PrefabFor("dwarf")), player.transform.position + Vector3.right * 2, Quaternion.identity);
                 npc = go.GetComponent<Companion>(); npc.Bind(player, "reliability-test", "dwarf", "Test", "female");
                 chest = UnityEngine.Object.Instantiate(ZNetScene.instance.GetPrefab("piece_chest_wood"), player.transform.position + Vector3.right * 3, Quaternion.identity).GetComponent<Container>();
-                chest.GetComponent<Piece>().SetCreator(player.GetPlayerID());
+                chest.GetComponent<Piece>().AssignCreator(player.GetPlayerID());
                 var benchPoint = player.transform.position + Vector3.forward * 4;
                 if (Heightmap.GetHeight(benchPoint, out float floor)) benchPoint.y = floor;
                 bench = UnityEngine.Object.Instantiate(ZNetScene.instance.GetPrefab("piece_workbench"), benchPoint, Quaternion.identity).GetComponent<CraftingStation>();
-                bench.GetComponent<Piece>().SetCreator(player.GetPlayerID());
+                bench.GetComponent<Piece>().AssignCreator(player.GetPlayerID());
                 // Isolate item/station selection; shelter is independently covered by construction tests.
                 bench.m_craftRequireRoof = false;
             } catch (Exception e) { report.Add("FAILED setup: " + e); }

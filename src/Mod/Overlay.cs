@@ -21,6 +21,8 @@ namespace Rune.Mod
         private bool overlayPositionDirty;
         private void InitializeOverlayPosition()
         {
+            trackCompanionTeam = Config.Bind("Interface", "TrackCompanionTeam", true, "Show owned companion map pins and direction/distance in the fellowship overlay. Rune app tracking preference overrides while connected.");
+            trackedCompanionIds = Config.Bind("Interface", "TrackedCompanionIds", "*", "Companion IDs shown on the map. Managed from each companion's Show on map toggle in Rune; * shows all until configured.");
             overlayWidth = Config.Bind("Interface", "OverlayWidth", 480f, "Overlay width in pixels; status text wraps and height grows with content.");
             overlayX = Config.Bind("Interface", "OverlayX", -1f, "Horizontal overlay position, 0 to 1; -1 uses the default.");
             overlayY = Config.Bind("Interface", "OverlayY", -1f, "Vertical overlay position, 0 to 1; -1 uses the default.");
@@ -37,7 +39,7 @@ namespace Rune.Mod
             if (!overlayPositionDirty || overlayX == null) return;
             overlayX.Value = overlayPosition.x; overlayY.Value = overlayPosition.y; overlayPositionDirty = false;
         }
-        [Serializable] private class VoiceOverlay { public long timestamp; public bool alwaysOn, muted; public string session = "", hotkey = "", recorder = "", controlAck = ""; public string companionName = "Rune", switchKey = "Ctrl + Alt + C", overlayKey = "F7", controlsKey = "F8"; public string companion = "rune", provider = "Local AI", state = "Mic off", caption = "", activity = ""; }
+        [Serializable] private class VoiceOverlay { public long timestamp; public bool alwaysOn, muted; public bool trackTeam = true; public string[] trackedCompanions; public string session = "", hotkey = "", recorder = "", controlAck = ""; public string companionName = "Rune", switchKey = "Ctrl + Alt + C", overlayKey = "F7", controlsKey = "F8"; public string companion = "rune", provider = "Local AI", state = "Mic off", caption = "", activity = ""; }
         private void PollOverlayState()
         {
             if (Time.unscaledTime > overlayPoll) {
@@ -152,6 +154,7 @@ namespace Rune.Mod
         private string[] StatusLines(Companion companion)
         {
             var lines = new System.Collections.Generic.List<string>();
+            if (IsCompanionTracked(companion.Id)) lines.Add("TEAM · " + CompanionLocation(companion));
             lines.Add(companion.EquippedWeaponStatus);
             if (companion.ObjectiveOngoing) lines.Add("GOAL · " + companion.Objective);
             lines.Add("NOW · " + companion.TaskLabel);

@@ -1,13 +1,24 @@
 param([switch]$SmokeTest)
 $ErrorActionPreference = 'Stop'
+. (Join-Path $PSScriptRoot 'Service Ports.ps1')
+$instanceMutex=$null;$ownsInstance=$false
 try {
     $root = $PSScriptRoot
+    $instanceMutex=New-Object Threading.Mutex $false,('Local\RuneFellowship-'+(Get-RuneInstanceKey $root))
+    try {$ownsInstance=$instanceMutex.WaitOne(0)} catch [Threading.AbandonedMutexException] {$ownsInstance=$true}
+    if(!$ownsInstance){throw 'Rune is already starting or open from this installation.'}
+    $existing=Get-Process RuneVoice -ErrorAction SilentlyContinue | Where-Object {$_.Path -eq (Join-Path $root 'app\RuneVoice.exe')}
+    if($existing){$ownsInstance=$false;$instanceMutex.ReleaseMutex();throw 'Rune is already open from this installation.'}
     $runtime = Join-Path $root 'runtime'
     $python = Join-Path $runtime 'python\python.exe'
     $env:DOTNET_ROOT = Join-Path $runtime 'dotnet'
     $env:OLLAMA_MODELS = Join-Path $runtime 'models'
-    $basePort=11439
-    if ($SmokeTest) { $basePort=12439 }
+    # Release abandoned services recorded by this installation only. Never adopt
+    # or stop an unknown listener belonging to another installation/application.
+    & (Join-Path $PSScriptRoot 'Stop Rune services.ps1')
+    $preferred=if($SmokeTest){12439}else{11439}
+    $basePort=Select-RunePortBase $root $preferred
+    @{basePort=$basePort;audioPort=$basePort+2;expressivePort=$basePort+3} | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $runtime 'service-ports.json')
     $env:RUNE_SERVICE_BASE_PORT=[string]$basePort
     $env:OLLAMA_HOST = '127.0.0.1:'+$basePort
     $brainUrl='http://127.0.0.1:'+$basePort
@@ -39,7 +50,12 @@ try {
     if ($mode -ne 'chatgpt' -and (Test-Path -LiteralPath (Join-Path $runtime 'ollama\ollama.exe'))) {
         Start-LocalService ($brainUrl+'/api/tags') (Join-Path $runtime 'ollama\ollama.exe') @('serve') 'ollama'
     }
-    Start-LocalService ($audioUrl+'/health') $python @('-I', ('"' + (Join-Path $runtime 'audio-service.py') + '"')) 'audio'
+    $speechReady=Test-Path -LiteralPath (Join-Path $runtime 'whisper-small.en/model.bin')
+    if ($speechReady) {
+        Start-LocalService ($audioUrl+'/health') $python @('-I', ('"' + (Join-Path $runtime 'audio-service.py') + '"')) 'audio'
+    } elseif (!(Test-Path -LiteralPath $prefs)) {
+        @{microphoneMode=0;voiceReplies=$false} | ConvertTo-Json | Set-Content -LiteralPath $prefs
+    }
     if (Test-Path -LiteralPath (Join-Path $runtime 'chatterbox-packages\chatterbox')) {
         Start-LocalService ($expressiveUrl+'/health') $python @('-I', ('"' + (Join-Path $runtime 'chatterbox-service.py') + '"')) 'chatterbox'
     }
@@ -48,10 +64,11 @@ try {
     if ($SmokeTest) {
         $checks=Join-Path $root 'startup-check';New-Item -ItemType Directory -Force $checks | Out-Null
         $audioReady=$false
-        for ($attempt=0;$attempt -lt 40;$attempt++) {
+        for ($attempt=0;$speechReady -and $attempt -lt 40;$attempt++) {
             try { Invoke-RestMethod ($audioUrl+'/health') -TimeoutSec 2 | ConvertTo-Json -Depth 8 | Set-Content (Join-Path $checks 'audio-health.json');$audioReady=$true;break } catch { Start-Sleep -Milliseconds 500 }
         }
-        if (!$audioReady) { throw 'Audio did not become ready during startup test.' }
+        if ($speechReady -and !$audioReady) { throw 'Audio did not become ready during startup test.' }
+        if (!$speechReady) { @{ready=$false;optionalSpeechModelsMissing=$true} | ConvertTo-Json | Set-Content (Join-Path $checks 'audio-health.json') }
         $appArgs=@('--wpf-preview', ('"'+(Join-Path $checks 'welcome.png')+'"'),'Welcome','1280','800')
         if ($mode -ne 'chatgpt' -and (Test-Path -LiteralPath (Join-Path $runtime 'ollama\ollama.exe'))) {
             $body=@{model='qwen3.5:4b';prompt='Reply exactly: Rune ready.';think=$false;stream=$false;keep_alive=0;options=@{num_predict=64}} | ConvertTo-Json -Depth 3
@@ -69,5 +86,6 @@ try {
     [System.Windows.MessageBox]::Show($_.Exception.Message, 'Rune could not start') | Out-Null
     exit 1
 } finally {
-    & (Join-Path $PSScriptRoot 'Stop Rune services.ps1')
+    if($ownsInstance){& (Join-Path $PSScriptRoot 'Stop Rune services.ps1');$instanceMutex.ReleaseMutex()}
+    if($instanceMutex){$instanceMutex.Dispose()}
 }

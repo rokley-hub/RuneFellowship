@@ -19,6 +19,7 @@ public sealed class CompanionProfile
     public bool UseStoredMaterials { get; set; } = true;
     public bool CraftAndBuild { get; set; } = true;
     public bool CookAndSort { get; set; } = true;
+    public bool ShowOnMap { get; set; } = true;
     public bool JoinBossFights { get; set; } = true;
 
     public static CompanionProfile[] Defaults() => new CompanionProfile[]
@@ -33,7 +34,7 @@ public sealed class CompanionProfile
         Id = Id, Name = Name, RecognitionName = RecognitionName, Appearance = Appearance, VoiceEngine = VoiceCatalog.NormalizeEngine(VoiceEngine), Voice = Voice,
         Personality = Personality, Traits = Traits.ToArray(), Role = Role, CombatStyle = CombatStyle,
         ConversationFrequency = ConversationFrequency, UseStoredMaterials = UseStoredMaterials,
-        CraftAndBuild = CraftAndBuild, CookAndSort = CookAndSort, JoinBossFights = JoinBossFights
+        CraftAndBuild = CraftAndBuild, CookAndSort = CookAndSort, JoinBossFights = JoinBossFights, ShowOnMap = ShowOnMap
     };
 }
 
@@ -45,6 +46,8 @@ public sealed class RunePreferences
     public string ControlsShortcut { get; set; } = "F8";
     public string GamePath { get; set; } = GameDiscovery.FindValheim();
     public string ModProfilePath { get; set; } = "";
+    public string ModSource { get; set; } = "thunderstore";
+    public Dictionary<string, string> ModSourcePages { get; set; } = new();
     public string Language { get; set; } = "en";
     public bool ChatGptEnabled { get; set; }
     // local = Qwen + selected local voice, hybrid = ChatGPT commands + local dialogue/voice,
@@ -77,6 +80,12 @@ internal static class ProfileStore
         {
             using var document = JsonDocument.Parse(File.ReadAllText(path));
             var root = document.RootElement;
+            if (root.TryGetProperty("modSource", out var modSource) && modSource.ValueKind == JsonValueKind.String) settings.ModSource = ModSources.Normalize(modSource.GetString());
+            if (root.TryGetProperty("modSourcePages", out var sourcePages) && sourcePages.ValueKind == JsonValueKind.Object)
+                foreach (var page in sourcePages.EnumerateObject().Take(5000)) {
+                    string source = page.Name.Split(':')[0];
+                    if (page.Value.ValueKind == JsonValueKind.String && ModSources.ValidPage(source, page.Value.GetString() ?? "")) settings.ModSourcePages[page.Name] = page.Value.GetString()!;
+                }
             if (root.TryGetProperty("language", out var language)) settings.Language = LanguageSettings.Normalize(language.GetString());
             if (root.TryGetProperty("chatGptEnabled", out var online)) settings.ChatGptEnabled = online.GetBoolean();
             if (root.TryGetProperty("aiMode", out var aiMode) && aiMode.GetString() is string selectedAiMode && selectedAiMode is "local" or "hybrid" or "chatgpt") settings.AiMode = selectedAiMode;

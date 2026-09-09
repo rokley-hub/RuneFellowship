@@ -11,6 +11,7 @@ internal sealed class RunePopupForm : Form
 
     internal RunePopupForm()
     {
+        string icon=Path.Combine(AppContext.BaseDirectory,"Assets","rune.ico"); if(File.Exists(icon)) Icon=new System.Drawing.Icon(icon);
         BackColor = RuneTheme.Stone; ForeColor = RuneTheme.Bone;
         ShowInTaskbar = false; MinimizeBox = false; MaximizeBox = false;
     }

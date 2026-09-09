@@ -14,7 +14,7 @@ public partial class LauncherWindow
 {
     internal Window CreateRuneDialog(string title, FrameworkElement body, double width = 540)
     {
-        var dialog = new Window {
+        var dialog = new Window { Icon = Icon,
             Owner = this, Title = title, Width = width, SizeToContent = SizeToContent.Height,
             MaxHeight = SystemParameters.WorkArea.Height - 32, WindowStartupLocation = WindowStartupLocation.CenterOwner,
             WindowStyle = WindowStyle.None, ResizeMode = ResizeMode.NoResize, AllowsTransparency = true,

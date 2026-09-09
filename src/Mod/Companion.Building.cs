@@ -61,7 +61,7 @@ namespace Rune.Mod
             try {
                 placed = Instantiate(plan.Boat, plan.BuildPosition, plan.BuildRotation);
                 if (!placed.GetComponent<ZNetView>().IsValid()) throw new InvalidOperationException("Building network object unavailable");
-                placed.GetComponent<Piece>().SetCreator(Owner);
+                placed.GetComponent<Piece>().AssignCreator(Owner);
                 var wear = placed.GetComponent<WearNTear>(); if (wear) wear.OnPlaced();
                 foreach (var callback in placed.GetComponents<IPlaced>()) callback.OnPlaced();
                 var station = placed.GetComponent<CraftingStation>();

@@ -62,7 +62,7 @@ namespace Rune.Mod
         internal static Component Place(Entry entry, long owner)
         {
             var obj = UnityEngine.Object.Instantiate(entry.Prefab, entry.Position, entry.Rotation);
-            obj.GetComponent<Piece>().SetCreator(owner);
+            obj.GetComponent<Piece>().AssignCreator(owner);
             var view = obj.GetComponent<ZNetView>();
             if (!view || !view.IsValid()) throw new InvalidOperationException("PlanBuild could not create a networked plan.");
             view.GetZDO().Set("AdditionalText", entry.Text ?? "");

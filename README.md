@@ -2,7 +2,7 @@
 
 An unofficial Windows app and Valheim companion mod with local speech, natural-language orders, companion profiles, mod management and an in-game task overview.
 
-**Public source preview. The packaged Windows app is still undergoing release review; no public installer is available yet.** See the setup guide, privacy description and known limitations in `docs`. The app does not include Valheim. Donations are voluntary and do not unlock features. Rune is not affiliated with Iron Gate, Coffee Stain or OpenAI.
+**Windows beta: desktop 0.4.26 / game plugin 0.3.16.** Download the online installer and matching source from [GitHub Releases](https://github.com/rokley-hub/RuneFellowship/releases). Extract the whole installer ZIP and run `Install Rune.exe`. Setup downloads selected runtimes and models from their original sources. This beta is unsigned and has been tested on the development PC; see the setup guide, privacy description and known limitations in `docs`. The app does not include Valheim or other authors' game mods. Donations are voluntary and do not unlock features. Rune is not affiliated with Iron Gate, Coffee Stain or OpenAI.
 
 ## Install and play
 
@@ -12,6 +12,8 @@ Use the packaged Rune app; you do not need to compile this source or arrange DLL
 2. A new profile automatically downloads and installs **BepInExPack_Valheim**, **Jötunn**, **PlanBuild** and their dependencies. For an existing profile, click **Install Rune requirements**. Rune keeps compatible installed versions and enables the required packages.
 3. Use **Browse Thunderstore** on the Mods page for any additional mods. No separate mod manager or manual ZIP extraction is required.
 4. Set up your microphone, voice and companion, then use **Start modded**.
+
+**Current compatibility limitation:** keep PlanBuild 0.18.4 disabled with the tested current Valheim version. Its placement hook failed during player spawning in a live test; disabling PlanBuild restored normal gameplay. The current requirements setup installs/enables it, so disable it in the profile before launching. Blueprint construction is unavailable while PlanBuild is disabled. A compatible update must come from its author; Rune does not include a fix.
 
 Internet access is needed to download missing requirements. Rune shows download/install progress. If setup fails, the profile is kept and **Install Rune requirements** retries it. Close Valheim before changing mods. See [the player setup guide](docs/START-HERE.md) for the app and optional voice/model packs.
 
