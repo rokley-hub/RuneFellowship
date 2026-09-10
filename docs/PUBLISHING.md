@@ -1,21 +1,17 @@
-# Publication controls
+# Publishing Rune Fellowship
 
-Status: HOLD — local release candidate, not cleared for external distribution.
+Desktop 0.4.29 is paired with gameplay plugin 0.3.16. A prepared archive is not proof of publication. Check the publication record before describing a version as available.
 
-Prepare public source from the allowlisted export, not from the development directory or its Git history. Rune's license is GPLv3-only with the approved linking exception. Resolve remaining speech dependency obligations before distributing even an unsigned testing build. No repository or source archive is uploaded by these scripts.
+## Release checklist
 
-After clearance:
-1. Choose the public repository/account and Thunderstore team. Start the public repository with the clean source export and no private development history. Add approved binaries, public documentation and issue templates there.
-2. Obtain a code-signing identity eligible for the publisher's country/account. The agent cannot complete identity verification, purchase a certificate, or sign without an authorized certificate/service. Do not create a self-signed certificate and describe it as trusted.
-3. Sign Rune executables with the chosen identity, timestamp signatures, regenerate file/pack manifests and SHA256SUMS after signing, and verify the final installed package. Hashes alone do not authenticate the publisher.
-4. Upload the approved core and optional packs as a draft release. Host large assets on a service whose per-file limits fit them; several model packs exceed common release-host asset limits. Alternatively split/repackage packs and update the installer before publishing. Do not publish an incomplete download set.
-5. Prepare the Thunderstore manifest with the actual website and dependencies; use a 256x256 PNG icon and README at ZIP root. Publish only Rune's gameplay DLL there; direct users to the approved desktop download. Validate team/package naming on submission.
-6. Invite testers using the feedback template. Invitations are not sent automatically. Announce the known limitations and unsigned status if no signature is available.
+1. Build from reviewed source and run the checks described in VERIFICATION.md. Keep gameplay, optional-stack and hardware limits explicit.
+2. Export the allowlisted source using export_source.py. Exclude private Git history, accounts, profiles, conversations and logs. Include the GPLv3-only licence, Valheim/Unity linking exception, matching source and applicable notices.
+3. Prepare a clean online installer. Download third-party runtimes/models from their locked original sources; never package a live installation or other authors' game mods. Retain source/download and licence notices.
+4. If a trusted signing identity is available, sign and timestamp binaries before generating final manifests/checksums. Otherwise clearly label the beta unsigned. Hashes alone do not authenticate the publisher.
+5. Publish the matching installer, source, update ZIP and update .zip.sha256 together in the official GitHub release. Ensure release tag and filenames match. Verify availability before announcing it. Users on 0.4.26 need the installer once.
+6. Refresh the existing Thunderstore package with the matching Rune plugin, nested full online installer, truthful version description, icon, README, licence and required dependency declarations. Do not bundle dependency mods. Explain how to extract the nested installer.
+7. Keep the wiki, known limitations and support links consistent with the released version. No background diagnostic uploads are enabled.
 
-No automatic update server is configured. The current updater installs a locally obtained, verified core package and supports rollback. Future automatic download needs a publisher-controlled HTTPS endpoint and authenticated update metadata; do not treat an arbitrary URL or mutable checksum file as trusted.
+Nexus review is a separate host-specific step. The recorded staff-review request is pending; successful local tests or publication elsewhere are not evidence of Nexus acceptance. See ONLINE-LICENCE-REVIEW.md for the documented dependency/integration review and its limits.
 
-Official references:
-- https://wiki.thunderstore.io/mods/creating-a-package
-- https://wiki.thunderstore.io/mods/packaging-your-mods
-- https://learn.microsoft.com/en-us/windows/apps/package-and-deploy/smartscreen-reputation
-- https://www.valheimgame.com/news/regarding-mods/
+Never replace an existing public version silently. Publish a new version for changed binaries, and keep rollback backups until the update works. Secure the release account; checksums hosted beside unsigned update files cannot protect against compromise of that account.

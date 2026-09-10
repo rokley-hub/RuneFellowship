@@ -2,20 +2,20 @@
 
 An unofficial Windows app and Valheim companion mod with local speech, natural-language orders, companion profiles, mod management and an in-game task overview.
 
-**Windows beta: desktop 0.4.26 / game plugin 0.3.16.** Download the online installer and matching source from [GitHub Releases](https://github.com/rokley-hub/RuneFellowship/releases). Extract the whole installer ZIP and run `Install Rune.exe`. Setup downloads selected runtimes and models from their original sources. This beta is unsigned and has been tested on the development PC; see the setup guide, privacy description and known limitations in `docs`. The app does not include Valheim or other authors' game mods. Donations are voluntary and do not unlock features. Rune is not affiliated with Iron Gate, Coffee Stain or OpenAI.
+**Windows beta: desktop 0.4.29 / game plugin 0.3.16.** Download the online installer and matching source from [GitHub Releases](https://github.com/rokley-hub/RuneFellowship/releases). Extract the whole installer ZIP and run `Install Rune.exe`. Setup downloads selected runtimes and models from their original sources. This beta is unsigned and has been tested on the development PC; see the setup guide, privacy description and known limitations in `docs`. The app does not include Valheim or other authors' game mods. Donations are voluntary and do not unlock features. Rune is not affiliated with Iron Gate, Coffee Stain or OpenAI.
 
 ## Install and play
 
 Use the packaged Rune app; you do not need to compile this source or arrange DLL files yourself. Install Valheim through Steam using your own license, then:
 
 1. Open Rune's **Mods** page, locate Valheim if needed, and create or select a Rune-owned profile.
-2. A new profile automatically downloads and installs **BepInExPack_Valheim**, **Jötunn**, **PlanBuild** and their dependencies. For an existing profile, click **Install Rune requirements**. Rune keeps compatible installed versions and enables the required packages.
-3. Use **Browse Thunderstore** on the Mods page for any additional mods. No separate mod manager or manual ZIP extraction is required.
-4. Set up your microphone, voice and companion, then use **Start modded**.
+2. A new profile downloads the required modding packages from their original publishers. For an existing profile, click **Profile options → Set up required mods**.
+3. Use **Browse mods** for additional mods; Nexus downloads and version checks use its website.
+4. Set up your microphone, voice and companions, then use **Start modded**. Click a companion card on Play to choose who receives your voice input.
 
-**Current compatibility limitation:** keep PlanBuild 0.18.4 disabled with the tested current Valheim version. Its placement hook failed during player spawning in a live test; disabling PlanBuild restored normal gameplay. The current requirements setup installs/enables it, so disable it in the profile before launching. Blueprint construction is unavailable while PlanBuild is disabled. A compatible update must come from its author; Rune does not include a fix.
+**Building compatibility remains a beta limitation.** An older integration caused repeated player spawning; keep an incompatible integration disabled. The newer integration has not passed a successful construction test. Requirement setup can enable the integration, so review your profile before launching. Rune does not contain a fix for third-party mod code.
 
-Internet access is needed to download missing requirements. Rune shows download/install progress. If setup fails, the profile is kept and **Install Rune requirements** retries it. Close Valheim before changing mods. See [the player setup guide](docs/START-HERE.md) for the app and optional voice/model packs.
+Internet access is needed to download missing requirements. Rune shows download/install progress. If setup fails, the profile is kept and **Profile options â†’ Set up required mods** retries it. Close Valheim before changing mods. See [the player setup guide](docs/START-HERE.md) for the app and optional voice/model packs.
 
 The build instructions below are **for developers changing Rune's source**, not player installation steps.
 
@@ -43,7 +43,7 @@ dotnet run --project tests/RuneTests.csproj
 
 ## Developer build: game plugin
 
-Compiling the plugin requires reference assemblies from your own licensed Valheim installation and the original BepInExPack_Valheim and Jötunn packages. Rune can download and install those packages for normal play as described above. This source project's build expects a separate reference folder containing `BepInExPack/BepInExPack_Valheim/BepInEx/core/BepInEx.dll`, `0Harmony.dll` beside it, and `Jotunn/plugins/Jotunn.dll`. Arrange that folder only if you are building the plugin yourself; the app's installed profile layout is different.
+Compiling the plugin requires reference assemblies from your own licensed Valheim installation and the original BepInExPack_Valheim and JÃƒÂ¶tunn packages. Rune can download and install those packages for normal play as described above. This source project's build expects a separate reference folder containing `BepInExPack/BepInExPack_Valheim/BepInEx/core/BepInEx.dll`, `0Harmony.dll` beside it, and `Jotunn/plugins/Jotunn.dll`. Arrange that folder only if you are building the plugin yourself; the app's installed profile layout is different.
 
 ```
 dotnet build src/Mod/RuneCompanion.csproj -c Release -p:ValheimDir="YOUR_VALHEIM_FOLDER" -p:DependencyDir="YOUR_DEPENDENCY_FOLDER/"
@@ -56,3 +56,13 @@ No game assemblies or third-party mod binaries are stored in this source export.
 Rune's original source is GPLv3-only with the additional permission in `LINKING-EXCEPTION.md` for Valheim/Unity and the listed modding components. See `LICENSE`. Third-party software, models and assets retain their own terms. This source release does not grant rights to redistribute the Valheim game.
 
 Packaging scripts currently expect the developer staging layout documented in `packaging/BUILDING-RELEASE.md`; runtime binaries and model packs are separate inputs. A source checkout alone does not contain multi-gigabyte models.
+
+## Latest desktop update
+
+0.4.29 adds a quieter interface, clearer fonts, notifications next to the window controls, reliable Play-card voice selection and aligned keybinding controls. It also includes the in-app updater and focused Settings/companion sections. See [CHANGELOG.md](CHANGELOG.md) for installation and beta limitations.
+
+![Rune Play screen with example companions](docs/images/play.png)
+
+![Rune Settings screen](docs/images/settings.png)
+
+Actual 0.4.29 desktop renders with isolated example data; these are interface screenshots, not proof of gameplay execution.

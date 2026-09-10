@@ -1,36 +1,32 @@
-# Rune Fellowship — private testing beta
+# Rune Fellowship — Windows beta
 
-Rune is an unofficial Windows companion for Valheim. This is a test build, not a stable release or an Iron Gate product. Valheim itself is required and is not included.
+Rune is an unofficial Valheim companion app. Desktop 0.4.29 uses gameplay plugin 0.3.16. Valheim is required and is not included. This is a beta, not a stable release or an official game product.
 
 ## Install
 
-Extract the core ZIP into a download folder. Put optional pack ZIPs beside that extracted folder. Open **Setup Rune.cmd**, choose a separate install folder, and select the packs you want. Setup does not need administrator rights when installing in your own user folder. Keep the download until testing succeeds.
+Extract the entire online-installer ZIP and open **Install Rune.exe**. Choose a separate installation folder and the components you want. Setup downloads selected runtimes, speech libraries and models from their original publishers and verifies the locked file checksums. It shows download sizes and keeps a cache for retrying. No other authors' game mods are bundled. You do not need to arrange dependency folders or compile Rune.
 
-The core contains the desktop app, bundled .NET and Python runtimes, English speech recognition and Kokoro voice. No Python or Codex desktop installation is required for local audio. Install **Local brain** for Qwen dialogue. For ChatGPT, install the official Codex CLI/helper yourself and choose it in Rune's ChatGPT settings if it is not found automatically. Sign in with your own account; availability and usage depend on your account. No API key option is provided.
+Kokoro is the fast voice option. Chatterbox Turbo and V3 are optional expressive voices. Local Qwen is needed for Local or Hybrid mode. For ChatGPT mode, install the official Codex helper separately and sign in through Rune's account settings with your own eligible account. There is no API-key option; account usage limits apply. Voice stays local in every mode.
 
-**Chatterbox Turbo** needs the expressive-runtime pack and turbo pack. **Chatterbox V3** needs expressive-runtime and v3. Both can be installed together. Initial voice loading can take considerably longer than subsequent replies. Start with Kokoro if expressive speech is too slow. English recognition is bundled; German/Dutch recognition requires the in-app download.
+## Set up a game
 
-## Set up your first game
+1. In **Mods → Profile options**, locate Valheim and create or import a profile. A new profile can download its requirements; an existing profile has **Set up required mods** in the same menu. Downloads come from original packages. Required-mod setup currently uses Thunderstore regardless of browsing preference.
+2. **Installed** manages the selected profile. **Browse mods** uses the source selected in **Settings → Mods**. Nexus downloads and update checks use its website; download a ZIP and use Import ZIP. Select an installed mod to enable/disable it, open its page, edit its own config or remove it. Profile options includes XML import/export and backup restoration.
+3. **Settings → AI connection** chooses Local, Hybrid or ChatGPT. Local uses Qwen for conversation and commands. Hybrid uses ChatGPT for commands and Qwen for conversation. ChatGPT mode uses ChatGPT for both and does not need Qwen.
+4. **Settings → Voice & mic** controls input, output, language, performance and spoken replies. Turning spoken replies off releases voice resources while retaining microphone commands and written replies. Bind keys in **Settings → Controls**; a single modifier such as Alt is supported.
+5. In **Companions**, select a companion and edit Personality, Voice or Behaviour. Voice has **Test voice**, available before saving. Save companion commits your edits. Show on map saves immediately for that companion. Summon and Unsummon control presence in the game; dismissal may first need to return borrowed tools or cargo.
+6. Start modded from the Play page. Start with a test world. The Commands page gives examples, expected behavior and prerequisites. Speak to one selected companion at a time. Click a companion card on Play to change the voice target; its gold border and the footer show who is selected. Watch the game task overview for actual progress and blocked reasons.
 
-1. In Mods, locate Valheim if needed and create a new Rune-owned mod profile. Your r2modman profiles are not required.
-2. Rune automatically downloads **BepInExPack_Valheim**, **Jötunn**, **PlanBuild** and their dependencies when you create a profile. For an existing profile, click **Install Rune requirements** on the Mods page. Compatible installed versions are kept and required packages are enabled. Progress appears on the page; if a download fails, keep the profile and use the same button to retry. Close Valheim before installing. Rune also attaches its companion plugin to its profiles. You do not need to download ZIPs in a browser, arrange DLL folders, compile source, or use another mod manager. Use **Browse Thunderstore** for additional mods.
-3. In Settings, choose the brain, microphone and output device. Set language, bind your microphone key and check volume. Microphone and companion speech can be controlled independently.
-4. In Companions, choose a voice and use **Test voice** before playing.
-5. Start modded from Rune. Begin in a new test world with a new character. Do not use important saves for initial beta testing.
-6. Use the Commands page for supported actions and their prerequisites. Follow, stop and defense commands interrupt work. Physical actions still require materials, equipment, reachable targets and native game prerequisites.
+## Updates and recovery
 
-## Update and recover
+Open **Settings → Updates & support → Check for updates**. Rune also checks its official GitHub releases once at startup. Downloading/installing requires an explicit action. Close Valheim before installing. Rune saves current companion edits, closes its own services, installs the verified app/plugin together, and reopens. Preferences, memories, models and other mods are preserved. See [UPDATES.md](UPDATES.md).
 
-Close Rune and Valheim, then run the new core's Setup Rune.cmd and select the existing beta install folder. Application files are verified before copying. Personal bridge data and mod profiles are not overwritten. Interrupted core installs restore changed files. Run **Rollback Rune.cmd** to restore the last core installation; this does not undo gameplay, profile changes or separately installed model packs.
+Users on 0.4.26 or earlier need the online installer once to gain in-app updates. Run a new installer into the existing installation to repair files or add missing optional components. Keep backups until the new version works. Verify Rune and Uninstall Rune are included; uninstall preserves personal data by default and never deletes Valheim saves.
 
-Optional packs are hash-checked and fully staged before activation. The core installer reports a pack failure separately, so you can retry it. Do not edit packaged runtime files in place.
+## Beta limits and support
 
-**Verify Rune.cmd** checks the installed core against its file manifest. Hashes detect damage; an unsigned manifest does not establish publisher identity. Use only the download received from the publisher. This beta is unsigned; do not disable Windows security.
+Building compatibility remains unverified with the newer blueprint integration. An older integration caused a player-spawn failure; disable the incompatible integration if affected. Do not assume all listed building intentions can complete with every installed mod version.
 
-**Uninstall Rune.cmd** removes unchanged core files and retains profiles, memories, optional packs and backups. It never deletes Valheim saves. Inspect remaining data before deleting the install folder yourself.
+Broad multiplayer, lower-end/non-NVIDIA hardware, gameplay under heavy GPU load and full fresh installation of every optional voice stack need field testing. Hardware minimums have not been established. Initial model loading can be slow. This beta is unsigned; file hashes detect damage but do not authenticate the publisher. Do not disable Windows security.
 
-## Requirements and limitations
-
-Windows x64; a licensed PC installation of Valheim; an Internet connection for mod downloads, account sign-in/cloud dialogue or optional recognition downloads. Hardware minimums have not been established. Space requirements are listed in the release pack manifest; installation needs temporary space for verification and rollback. GPU performance varies; CUDA availability is not a guarantee that expressive speech will remain fast while Valheim is running.
-
-Only one Rune instance should run per PC. Local services use loopback ports 11439, 11441 and 11442. Close another Rune installation before testing this one. Multiplayer/dedicated-server compatibility, arbitrary mod combinations and broad hardware coverage are not certified. Do not describe all game actions as supported: the in-app Commands list and game-reported blocked reasons are authoritative.
+Open **Settings → Updates & support** for the player guide, local session report and GitHub issue page. Review any report before sharing; never upload account folders or your entire installation. See [PRIVACY.md](PRIVACY.md).

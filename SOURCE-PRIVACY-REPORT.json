@@ -1,7 +1,7 @@
 {
   "passed": true,
-  "files": 187,
-  "pngFilesCheckedForTextOrExif": 12,
+  "files": 207,
+  "pngFilesCheckedForTextOrExif": 18,
   "findings": [],
   "scope": "Allowlisted source, tests, generated UI assets and new public documentation. No git history, credentials, conversations, user profiles, logs or binary build outputs exported.",
   "limitation": "Pattern and metadata inspection is not a mathematical proof that no sensitive data exists; manually review before publishing."

@@ -1,25 +1,24 @@
-# Release-candidate verification
+# Release verification — desktop 0.4.29 / gameplay 0.3.16
 
-Desktop 0.4.21, gameplay 0.3.14. Checked on 8 September 2026.
+Checked on 10 September 2026 on the development PC. The source and release records distinguish local candidates from public versions.
 
 ## Established
 
-- The allowlisted source export builds both the Windows desktop and game plugin in a separate checkout. No game assemblies are included in the export.
-- 316 command/protocol, 31 recorder and 29 combat-policy checks passed. These are synthetic checks, not a new gameplay session.
-- Existing desktop session/command regressions and ChatGPT contract checks passed. The helper started signed out in an isolated account folder, returned a browser-login URL and supported cancellation. No authenticated cloud model request was made for this release test.
-- Nine installer tests passed: upgrade/rollback preserve user data; damaged input is rejected; copy failure restores earlier files; overlapping paths, unknown nonempty folders, duplicate entries, unsafe archive paths and changed-file rollback are rejected.
-- The real core package installed into a separate test directory. The local-brain and both expressive-model packs passed hash verification and extraction there.
-- Portable embedded Python imports the bundled speech dependencies without global/user Python packages. All six Kokoro voices generated synthetic WAV files. English recognition transcribed a synthetic gathering command and conversation sentence correctly.
-- With developer PATH entries removed and an intentionally invalid PYTHONPATH, isolated startup brought up its own audio and Qwen services, produced `Rune ready.`, and rendered the welcome screen. Test services used a separate loopback port range and were stopped afterward.
-- Chatterbox Turbo and V3 each generated a non-empty synthetic English WAV on the available CUDA device. Cold generation for the short samples took approximately 33.5 and 12.0 seconds respectively; this is not a game-load benchmark or a listening-quality guarantee.
-- The welcome screen was rendered and visually inspected. Installer scripts parsed successfully.
-- The one-click game-requirements setup passed an actual Thunderstore download/install into a separate empty profile: BepInEx 5.4.2333, Jötunn 2.29.2, HookGenPatcher 0.0.4 and PlanBuild 0.18.4. Required library files existed and were enabled; no game was launched. Requirements tests also cover compatible-version reuse, minimum-version upgrades, disabled dependencies and an incomplete catalogue. The updated Mods page was rendered at 1280×800 and inspected.
-- The public source privacy scanner checks known private terms, absolute user-home paths, unexpected emails, credential-shaped text and PNG text/EXIF chunks. See the source archive's own report for the final file count and result.
+- The desktop builds with the visual refresh. Native WPF renders exercise Settings sections, companion tabs, Mods, Commands and shared dialogs at the minimum 1280 × 760 window size. Layout checks cover control bounds, voice test access, retained companion drafts, per-companion tracking and the public command catalogue.
+- The existing updater has 24 deterministic checks covering source selection, payload hashes, path restrictions, blocked installation while Valheim is open, profile preservation and rollback. Windows PowerShell 5 interrupted-journal recovery and the detached-worker fixture passed for the preceding updater implementation. These establish the tested cases, not a live public download or arbitrary power-failure recovery.
+- The official NuGet feed returned no known vulnerable packages for the desktop project's direct and transitive packages on this date. This is a scoped .NET dependency check, not an audit of every downloaded Python/model/native component. Builds can still display a cached NU1900 restore warning; the separate online audit completed successfully.
+- Earlier default online setup tests installed speech, started services, generated a synthetic Kokoro sentence and transcribed it with Whisper. Text-only startup passed. Existing installer regressions cover damaged downloads and preservation/rollback behavior.
+- Source export uses an allowlist and a privacy scan. The individual source archive includes its own report. No private profiles, credentials or conversations are part of release payloads.
 
-## Not established
+## Remaining limits
 
-This is not testing on a second physical PC or a fresh Windows VM. Windows Sandbox is unavailable here. Fresh-machine driver/runtime behaviour, lower-end GPUs, non-NVIDIA hardware, broad mod compatibility, multiplayer, live microphone/headset playback on other machines and Valheim FPS under AI load still need field testing.
+- No second physical PC or fresh Windows VM test. Broad multiplayer, non-NVIDIA hardware, GPU-heavy gameplay and every optional voice stack's fresh online installation remain unverified.
+- Blueprint compatibility is still a beta limitation. A newer integration loaded its world but failed fixture setup; successful building was not established.
+- The installed 0.4.28 updater transaction succeeded and its normal launcher opened on the development PC. Synthetic Kokoro generation and Whisper recognition passed separately. This does not establish a public-network update download or real microphone/headset playback end to end.
+- The beta is unsigned. Licence notices and source accompany Rune; the engineering review is not blanket legal clearance. Nexus review remains separate.
 
-The desktop build reported an unavailable NuGet vulnerability index; this is not a clean vulnerability-audit result. The game build retains existing assembly-reference and deprecated-Unity-API warnings, with no errors. Build success does not resolve those warnings or establish full gameplay correctness.
+Do not read successful renders or synthetic command checks as proof that every action works in ordinary gameplay. Keep release notes accurate about these limits.
 
-No trusted code-signing certificate was available in the current user's signing store. Nothing has been uploaded, published, or sent to testers. Rune's source license is approved; corresponding-source/native dependency obligations, signing and release-host configuration remain publication gates.
+## 0.4.29 release additions
+
+The typography, quiet background, notification panel and Play voice-target fix are included. Actual WPF renders use isolated fixture data. The Play click regression failed before the fix and passed afterward for three companions while preserving editor drafts. Notification fixtures cover app/mod updates, dependency issues, failed checks, Nexus limitations and clearing resolved notices. No gameplay changes were introduced.

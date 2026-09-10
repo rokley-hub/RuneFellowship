@@ -16,6 +16,8 @@ try {
     # Release abandoned services recorded by this installation only. Never adopt
     # or stop an unknown listener belonging to another installation/application.
     & (Join-Path $PSScriptRoot 'Stop Rune services.ps1')
+    $recovery=Join-Path $root 'Update Recovery.ps1'
+    if(Test-Path -LiteralPath $recovery){. $recovery;Restore-InterruptedRuneUpdate $root}
     $preferred=if($SmokeTest){12439}else{11439}
     $basePort=Select-RunePortBase $root $preferred
     @{basePort=$basePort;audioPort=$basePort+2;expressivePort=$basePort+3} | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $runtime 'service-ports.json')

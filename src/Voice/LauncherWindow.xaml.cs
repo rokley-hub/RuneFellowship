@@ -51,7 +51,9 @@ public partial class LauncherWindow : Window
     private sealed class RosterChoice
     {
         public required CompanionProfile Profile { get; init; }
-        public required string Status { get; init; }
+        public required string Status { get; set; }
+        public BitmapImage? Portrait { get; init; }
+        public string Name => Profile.Name;
         public override string ToString() => Profile.Name + "\n" + FriendlyAppearance(Profile.Appearance) + " · " + Status;
     }
     private sealed class ModRow
@@ -69,6 +71,11 @@ public partial class LauncherWindow : Window
     {
         this.runtime = runtime;
         InitializeComponent();
+        Loaded += (_, _) => UpdateEmberAnimation();
+        StateChanged += (_, _) => UpdateEmberAnimation();
+        Closed += (_, _) => { RuneEmberHalo.BeginAnimation(OpacityProperty, null); RuneEmberCore.BeginAnimation(OpacityProperty, null); };
+        ContentRendered += async (_, _) => { if (!Environment.GetCommandLineArgs().Contains("--wpf-preview")) await CheckRuneUpdate(false); };
+        Closed += (_, _) => updateLifetime.Cancel();
         InitializeChoices();
         InitializeCommandLibrary();
         runtime.ShellCommandsRequested += OpenCommandsFromRuntime;
@@ -134,7 +141,7 @@ public partial class LauncherWindow : Window
         CommandExample.Text = "“" + choice.Ability.example + "”";
         CommandDescription.Text = choice.Ability.description;
         CommandHint.Text = choice.Ability.group switch {
-            "Building & boats" => "Use the exact saved design name and say ‘on me’ or ‘on yourself’. PlanBuild is required for designs. Rune cannot invent an arbitrary house layout or sail a boat.",
+            "Building & boats" => "Use the exact saved design name and say ‘on me’ or ‘on yourself’. A compatible blueprint integration is required for designs; building compatibility is still a beta limitation. Rune cannot invent an arbitrary house layout or sail a boat.",
             "Gathering & loot" => "Get, collect, find and gather express the same goal when the item is clear. Name a quantity for a bounded trip (1–100). Named loose items can be collected; Rune cannot harvest every resource type.",
             "Crafting & task plans" => "‘Make a bronze axe’ requests work. ‘What does a bronze axe need?’ asks for information. Crafting already checks missing ingredients; you do not need to spell out each gathering step.",
             "Combat & equipment" => "‘Defend me’, ‘protect me’ and ‘watch my back’ request protection. The companion's body, available equipment and combat style determine how they can fight.",
@@ -167,23 +174,29 @@ public partial class LauncherWindow : Window
         var profiles = runtime.ShellProfiles();
         var current = profiles.FirstOrDefault(p => p.Id == runtime.ShellSelectedCompanionId) ?? profiles.FirstOrDefault();
         string name = current?.Name ?? "Rune";
-        TalkTargetText.Text = "Talking to " + name;
+        TalkTargetText.Text = name;
+        var portraitKey = current == null ? "" : current.Id + ":" + current.Appearance + ":" + current.Voice;
+        if (portraitKey != footerPortraitKey) { FooterPortrait.Source = current == null ? null : PortraitSource(current); footerPortraitKey = portraitKey; }
+        ActivityText.Text = runtime.ShellActivity;
+        ActivityText.Foreground = (WpfBrush)FindResource(runtime.ShellActivity is "Muted" or "Mic offline" ? "Gold" : "Green");
+        ActivityText.ToolTip = runtime.ShellListeningStatus;
         ConversationTitle.Text = "Conversation with " + name;
-        string mic = runtime.ShellMicrophoneMuted ? "●  Microphone muted" : runtime.ShellAlwaysOn ? "●  Always listening" : string.IsNullOrWhiteSpace(runtime.ShellListeningStatus) ? "Hold to talk · " + runtime.ShellMicShortcut : runtime.ShellListeningStatus;
-        MicStateText.Text = mic;
-        MicStateText.Foreground = runtime.ShellMicrophoneMuted ? new SolidColorBrush(WpfColor.FromRgb(211, 154, 77)) : (WpfBrush)FindResource("Green");
+        MicStateText.Text = runtime.ShellMicrophoneMode == 0 ? "Microphone off · typed chat available"
+            : runtime.ShellAlwaysOn ? runtime.ShellMicShortcut + " toggles mute" : "Hold to talk · " + runtime.ShellMicShortcut;
+        MicStateText.Foreground = (WpfBrush)FindResource("Muted");
         MuteButton.Content = runtime.ShellMicrophoneMuted ? "Unmute mic" : "Mute mic";
         MuteButton.IsEnabled = runtime.ShellAlwaysOn;
-        TitleRuntimeStatus.Text = state.ready ? name + " connected to Valheim" : "Rune ready · Valheim closed";
+        TitleRuntimeStatus.Text = state.ready ? "Valheim connected" : "Valheim closed";
         ConversationTranscript.Text = runtime.ShellTranscript;
-        ConversationProvider.Text = runtime.ShellAiMode == "chatgpt" ? "Full ChatGPT · " + runtime.ShellVoiceRoute : runtime.ShellAiMode == "hybrid" ? "ChatGPT tasks · local conversation" : "Local conversation";
+        ConversationProvider.Text = runtime.ShellAiMode == "chatgpt" ? "ChatGPT · " + runtime.ShellVoiceRoute : runtime.ShellAiMode == "hybrid" ? "ChatGPT tasks · local conversation" : "Local conversation";
         if (ConversationPage.Visibility == Visibility.Visible) ConversationTranscript.ScrollToEnd();
 
         if (selectedProfile != null) {
             var member = state.roster.FirstOrDefault(c => c.id == selectedProfile.Id);
-            CompanionRuntimeInfo.Text = member == null ? "Not summoned\n\n150 base health · 32 inventory slots\nIndependent of your player stats" :
+            CompanionRuntimeInfo.Text = member == null ? "Not summoned\n\n150 base health\n32 inventory slots" :
                 $"{member.task}\n\nHealth {member.health:0} / {member.maxHealth:0} · Cargo {member.cargo}\nBase {(member.hasBase ? "remembered" : "not set")}";
         }
+        RefreshPresence(state);
         RefreshPlayCompanions(profiles, state);
     }
 
@@ -243,7 +256,7 @@ public partial class LauncherWindow : Window
         CompanionRoster.Items.Clear();
         foreach (var profile in profiles) {
             string status = state.roster.FirstOrDefault(c => c.id == profile.Id)?.task ?? "Not summoned";
-            CompanionRoster.Items.Add(new RosterChoice { Profile = profile, Status = status });
+            CompanionRoster.Items.Add(new RosterChoice { Profile = profile, Status = status, Portrait = PortraitSource(profile) });
         }
         var chosen = CompanionRoster.Items.Cast<RosterChoice>().FirstOrDefault(c => c.Profile.Id == wanted) ?? CompanionRoster.Items.Cast<RosterChoice>().FirstOrDefault();
         CompanionRoster.SelectedItem = chosen;
@@ -260,10 +273,17 @@ public partial class LauncherWindow : Window
             var grid = new Grid(); grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(118) }); grid.ColumnDefinitions.Add(new ColumnDefinition());
             grid.Children.Add(new WpfImage { Source = PortraitSource(profile), Stretch = Stretch.UniformToFill });
             var text = new StackPanel { Margin = new Thickness(17, 12, 10, 8) }; Grid.SetColumn(text, 1);
-            text.Children.Add(new TextBlock { Text = profile.Name, FontFamily = new WpfFontFamily("Georgia"), FontSize = 22, Foreground = (WpfBrush)FindResource("Bone"), FontWeight = FontWeights.SemiBold });
+            text.Children.Add(new TextBlock { Text = profile.Name, FontFamily = new WpfFontFamily("Georgia"), FontSize = 22, Foreground = (WpfBrush)FindResource("Bone"), FontWeight = FontWeights.Normal });
             text.Children.Add(new TextBlock { Text = FriendlyAppearance(profile.Appearance) + " · " + profile.Role, Foreground = (WpfBrush)FindResource("Muted"), Margin = new Thickness(0, 7, 0, 0), TextWrapping = TextWrapping.Wrap });
             text.Children.Add(new TextBlock { Text = profile.Id == runtime.ShellSelectedCompanionId ? "●  Voice target" : member == null ? "○  Not summoned" : "●  " + member.task, Foreground = profile.Id == runtime.ShellSelectedCompanionId ? (WpfBrush)FindResource("Green") : (WpfBrush)FindResource("Muted"), Margin = new Thickness(0, 10, 0, 0), TextTrimming = TextTrimming.CharacterEllipsis });
-            grid.Children.Add(text); card.Child = grid; card.MouseLeftButtonUp += (_, _) => { runtime.ShellSelectCompanion(profile.Id); RefreshProfiles(); RefreshRuntimeState(); };
+            grid.Children.Add(text); card.Child = grid;
+            card.ToolTip = "Talk to " + profile.Name + " · click to select your voice target";
+            card.MouseLeftButtonUp += (_, e) => {
+                // The editor may contain another companion's unsaved draft. Rebuilding
+                // its roster here would select that companion again and undo this click.
+                if (runtime.ShellSelectedCompanionId != profile.Id) runtime.ShellSelectCompanion(profile.Id);
+                RefreshRuntimeState(); e.Handled = true;
+            };
             PlayCompanionCards.Children.Add(card);
         }
     }
@@ -299,7 +319,7 @@ public partial class LauncherWindow : Window
     private void UpdatePortrait()
     {
         if (selectedProfile == null) return;
-        var draft = DraftProfile(); CompanionPortrait.Source = PortraitSource(draft); PortraitTitle.Text = FriendlyAppearance(draft.Appearance);
+        var draft = DraftProfile(); CompanionPortrait.Source = PortraitSource(draft); PortraitTitle.Text = draft.Name;
         PortraitDescription.Text = draft.Appearance switch {
             "wolf" => "Fast animal companion. Can fight and collect loose items, but cannot wear armour or use tools.",
             "dwarf" => (IsMaleVoice(draft) ? "Male" : "Female") + " player-style dwarf. Can wear armour and use weapons and tools.",
@@ -368,8 +388,8 @@ public partial class LauncherWindow : Window
 
     private void RefreshModsList()
     {
-        if (ModsProfileCombo.SelectedItem is not ProfileChoice profile) { ModsList.ItemsSource = null; ProfileHealthText.Text = "Create or import a mod profile to begin."; UpdateModButtons(); return; }
-        try { installedMods = ModProfiles.Read(profile.Path); } catch (Exception e) { ModNoticeText.Text = e.Message; return; }
+        if (ModsProfileCombo.SelectedItem is not ProfileChoice profile) { installedMods.Clear(); notificationDependencyIssue = notificationProfileError = ""; ModsList.ItemsSource = null; ProfileHealthText.Text = "Create or import a mod profile to begin."; UpdateModButtons(); RefreshNotifications(); return; }
+        try { installedMods = ModProfiles.Read(profile.Path); notificationProfileError = ""; } catch (Exception e) { installedMods.Clear(); notificationDependencyIssue = ""; notificationProfileError = "Could not read profile"; ModsList.ItemsSource = null; ModNoticeText.Text = e.Message; RefreshNotifications(); return; }
         selectedMod = null;
         string search = ModsSearchBox.Text ?? ""; int filter = ModsFilterCombo.SelectedIndex;
         IEnumerable<ModRow> rows;
@@ -385,6 +405,7 @@ public partial class LauncherWindow : Window
         int enabled = installedMods.Count(m => m.Enabled); bool plan = installedMods.Any(m => m.Enabled && m.Id.Contains("PlanBuild", StringComparison.OrdinalIgnoreCase));
         int updates = UseNexus ? 0 : AvailableUpdates().Count;
         string issue = installedMods.Where(m => m.Enabled).Select(m => ModProfiles.DependencyError(installedMods, m, true)).FirstOrDefault(x => x.Length > 0) ?? "";
+        notificationDependencyIssue = issue;
         ProfileHealthText.Text = enabled + " mods enabled · PlanBuild " + (plan ? "ready" : "not enabled") + " · " + (issue.Length == 0 ? "No known dependency conflicts" : issue);
         ModNoticeText.Text = UseNexus
             ? (browsingMods ? "Nexus downloads import into " + profile.Label : installedMods.Count + " mods in " + profile.Label) + " · Check dependencies and updates on the website."
@@ -392,6 +413,7 @@ public partial class LauncherWindow : Window
             : installedMods.Count + " mods in " + profile.Label + " · " + updates + " known updates" + (installedMods.Any(m=>NexusMods.IsNexus(m.Id)) ? " · Imported ZIP versions are not checked automatically" : "");
         ModsNav.Content = updates > 0 ? "◆   Mods  ·  " + updates : "◆   Mods";
         UpdateModButtons();
+        RefreshNotifications();
     }
 
     private List<CatalogMod> AvailableUpdates() => installedMods.Select(m => catalogMods.FirstOrDefault(c => c.Id == m.Id && ModCatalog.IsNewer(m.Version, c.Version))).Where(c => c != null).Cast<CatalogMod>().ToList();
@@ -418,6 +440,8 @@ public partial class LauncherWindow : Window
         ModSourceHelp.Text = UseNexus ? "Links open on Nexus; ZIP downloads and updates use its website. Required-mod setup uses Thunderstore." : "Links open on Thunderstore. Browse, install and update in Rune. Switching source keeps your installed mods.";
         bool fullChatGpt = runtime.ShellAiMode == "chatgpt";
         AiModeCombo.SelectedIndex = fullChatGpt ? 2 : runtime.ShellAiMode == "hybrid" ? 1 : 0;
+        RefreshAiCards();
+        if (runtime.ShellAiMode == "local") SettingsChatStatus.Text = "ChatGPT · Off in Local mode";
         AiModeHelp.Text = fullChatGpt
             ? "ChatGPT handles conversation and commands. Qwen is off. The companion's selected voice engine stays local."
             : runtime.ShellAiMode == "hybrid"
@@ -448,9 +472,12 @@ public partial class LauncherWindow : Window
     internal void ShowPreviewPage(string page)
     {
         ShowPage(page is "ModsBrowse" or "Dropdown" ? "Mods" : page == "PlayStatus" ? "Play" : page == "CompanionsTest" ? "Companions" : page);
+        if (page.StartsWith("Settings")) { ShowPage("Settings"); SelectSection(SettingsSections, SettingsTabs, page.Length > 8 ? page[8..] : "AI"); }
+        if (page.StartsWith("Companions")) { ShowPage("Companions"); SelectSection(CompanionSections, CompanionTabs, page is "CompanionsVoice" or "CompanionsTest" ? "Voice" : page == "CompanionsBehaviour" ? "Behaviour" : "Personality"); }
         if (page == "ModsBrowse") SetModsMode(true);
         if (page == "Dropdown") ModsProfileCombo.IsDropDownOpen = true;
         if (page == "PlayStatus") ApplyHealth(true, true, true, "Connected");
+        if (page == "Notifications") { ShowPage("Settings"); PreviewNotifications(); }
         if (page == "CompanionsTest") { TestVoiceButton.Content = "Stop"; CompanionNotice.Text = "Preparing Chatterbox Turbo… First use can take about 30 seconds. The personality sample is available in Conversation."; }
     }
 
@@ -519,16 +546,6 @@ public partial class LauncherWindow : Window
         try { await runtime.ShellRemoveCompanion(selectedProfile.Id); selectedProfile = null; RefreshProfiles(); }
         catch (Exception ex) { ShowRuneMessage(ex.Message, "Could not remove companion"); }
     }
-    private async void SummonCompanion_Click(object sender, RoutedEventArgs e) { if (selectedProfile == null) return; try { await runtime.ShellSaveProfile(DraftProfile()); await runtime.ShellSummon(selectedProfile.Id); CompanionNotice.Text = "Summon request sent."; } catch (Exception ex) { CompanionNotice.Text = ex.Message; } }
-    private async void UnsummonCompanion_Click(object sender, RoutedEventArgs e)
-    {
-        if (selectedProfile == null) return;
-        string id = selectedProfile.Id;
-        UnsummonCompanionButton.IsEnabled = false;
-        try { string result = await runtime.ShellUnsummon(id); if (selectedProfile?.Id == id) CompanionNotice.Text = result; }
-        catch (Exception ex) { if (selectedProfile?.Id == id) CompanionNotice.Text = ex.Message; }
-        finally { UnsummonCompanionButton.IsEnabled = true; }
-    }
     private async void TestVoice_Click(object sender, RoutedEventArgs e)
     {
         if (voicePreview != null) { voicePreview.Cancel(); return; }
@@ -538,7 +555,7 @@ public partial class LauncherWindow : Window
         try { await runtime.ShellPreviewVoice(DraftProfile(), preview.Token, stage => { CompanionNotice.Text = stage; CompanionNotice.ToolTip = stage; }); }
         catch (OperationCanceledException) { CompanionNotice.Text = "Voice test stopped or interrupted."; }
         catch (Exception ex) { CompanionNotice.Foreground = (WpfBrush)FindResource("Gold"); CompanionNotice.Text = "Voice test unavailable: " + ex.Message; }
-        finally { voicePreview = null; TestVoiceButton.Content = "Test"; CompanionNotice.ToolTip = CompanionNotice.Text; }
+        finally { voicePreview = null; TestVoiceButton.Content = "Test voice"; CompanionNotice.ToolTip = CompanionNotice.Text; }
     }
 
     private void OpenConversation_Click(object sender, RoutedEventArgs e) => ShowPage("Conversation");
@@ -600,10 +617,11 @@ public partial class LauncherWindow : Window
     {
         if (catalogRefreshRunning) return;
         catalogRefreshRunning = true;
+        RefreshNotifications();
         ModNoticeText.Text = "Refreshing Thunderstore catalogue…";
-        try { catalogMods = await ModCatalog.Refresh(runtime.ShellModsRoot, new Progress<string>(s => Dispatcher.Invoke(() => ModNoticeText.Text = s)), CancellationToken.None); RefreshModsList(); if (!UseNexus) ModNoticeText.Text = catalogMods.Count + " packages available. Update check complete."; }
-        catch (Exception ex) { ModNoticeText.Text = "Catalogue unavailable: " + ex.Message; }
-        finally { catalogRefreshRunning = false; }
+        try { catalogMods = await ModCatalog.Refresh(runtime.ShellModsRoot, new Progress<string>(s => Dispatcher.Invoke(() => ModNoticeText.Text = s)), CancellationToken.None); notificationCatalogFailed = false; RefreshModsList(); if (!UseNexus) ModNoticeText.Text = catalogMods.Count + " packages available. Update check complete."; }
+        catch (Exception ex) { notificationCatalogFailed = true; ModNoticeText.Text = "Catalogue unavailable: " + ex.Message; }
+        finally { catalogRefreshRunning = false; RefreshNotifications(); }
     }
     private async Task EnsureCatalogFresh()
     {
@@ -884,3 +902,5 @@ public partial class LauncherWindow : Window
     private void VoiceRepliesCheck_Changed(object sender, RoutedEventArgs e) { if (!loadingSettings) runtime.ShellSetVoiceReplies(VoiceRepliesCheck.IsChecked == true); }
     private void GameOrdersCheck_Changed(object sender, RoutedEventArgs e) { if (!loadingSettings) runtime.ShellSetAllowOrders(GameOrdersCheck.IsChecked == true); }
 }
+
+

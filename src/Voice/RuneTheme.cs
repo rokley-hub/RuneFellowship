@@ -16,8 +16,8 @@ internal static class RuneTheme
     public static readonly Color AmberSoft = Color.FromArgb(235, 203, 144);
     public static readonly Color Moss = Color.FromArgb(104, 125, 70);
     public static readonly Color MossDark = Color.FromArgb(54, 67, 43);
-    public static readonly Color Bone = Color.FromArgb(229, 218, 195);
-    public static readonly Color Muted = Color.FromArgb(174, 164, 143);
+    public static readonly Color Bone = Color.FromArgb(240, 235, 221);
+    public static readonly Color Muted = Color.FromArgb(192, 184, 166);
     public static readonly Color Good = Color.FromArgb(145, 190, 91);
     private static Image? texture;
     private static Image? buttonTexture;
@@ -158,11 +158,12 @@ internal static class RuneTheme
         button.UseVisualStyleBackColor = false;
         button.BackgroundImageLayout = ImageLayout.None;
         button.BackgroundImage = skin.Image;
+        button.ForeColor = tone == RuneButtonTone.Primary ? Coal : Bone;
         oldImage?.Dispose();
         button.FlatAppearance.BorderColor = tone switch
         {
             RuneButtonTone.Selected or RuneButtonTone.NavigationSelected => Amber,
-            RuneButtonTone.Primary => Moss,
+            RuneButtonTone.Primary => AmberSoft,
             RuneButtonTone.Danger => Color.FromArgb(170, 67, 52),
             _ => Iron
         };
@@ -177,26 +178,16 @@ internal static class RuneTheme
 
     private static Image? ButtonBackground(Size size, RuneButtonTone tone)
     {
-        bool navigation = tone is RuneButtonTone.Navigation or RuneButtonTone.NavigationSelected;
-        var source = navigation ? NavigationTexture : ButtonTexture;
-        if (source == null || size.Width < 2 || size.Height < 2) return null;
-
+        if (size.Width < 2 || size.Height < 2) return null;
         var bitmap = new Bitmap(size.Width, size.Height);
         using var graphics = Graphics.FromImage(bitmap);
-        graphics.InterpolationMode = InterpolationMode.HighQualityBicubic;
-        DrawNineSlice(graphics, source, new Rectangle(Point.Empty, size), navigation);
-        Color tint = tone switch
-        {
-            RuneButtonTone.Selected => Color.FromArgb(38, 180, 111, 26),
-            RuneButtonTone.NavigationSelected => Color.FromArgb(42, 157, 96, 21),
-            RuneButtonTone.Primary => Color.FromArgb(72, 55, 96, 32),
-            RuneButtonTone.Danger => Color.FromArgb(105, 125, 27, 20),
-            RuneButtonTone.Navigation => Color.FromArgb(54, 7, 7, 6),
-            _ => Color.FromArgb(48, 12, 12, 10)
-        };
-        using var veil = new SolidBrush(tint);
-        graphics.FillRectangle(veil, bitmap.Width > 4 ? 2 : 0, bitmap.Height > 4 ? 2 : 0, Math.Max(1, bitmap.Width - 4), Math.Max(1, bitmap.Height - 4));
-        return bitmap;
+        graphics.Clear(tone switch {
+            RuneButtonTone.Primary => Color.FromArgb(203, 169, 88),
+            RuneButtonTone.Selected or RuneButtonTone.NavigationSelected => Color.FromArgb(57, 48, 31),
+            RuneButtonTone.Danger => Color.FromArgb(57, 36, 31),
+            RuneButtonTone.Navigation => Coal,
+            _ => Color.FromArgb(48, 46, 39)
+        });        return bitmap;
     }
 
     private static void DrawNineSlice(Graphics graphics, Image image, Rectangle target, bool navigation)
@@ -381,3 +372,4 @@ internal sealed class RuneSurfaceTable : TableLayoutPanel
     public RuneSurfaceTable() { DoubleBuffered = true; SetStyle(ControlStyles.SupportsTransparentBackColor, true); BackColor = Color.Transparent; }
     protected override void OnPaintBackground(PaintEventArgs e) { base.OnPaintBackground(e); RuneTheme.Shade(e.Graphics, ClientRectangle, 48); }
 }
+

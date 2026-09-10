@@ -8,6 +8,8 @@ In Local mode, the local Qwen service processes conversations. In Split or Full 
 
 ChatGPT login is handled by the official helper using a separate account-data folder. Never share `bridge/chatgpt-account`, your full bridge folder, exported personal mod configs without review, or a ZIP of your complete installation. Rune does not bundle the author's account.
 
+Rune contacts GitHub once at startup and when you check for updates. If you choose an update, GitHub serves its files. These requests expose normal connection metadata such as IP address; Rune does not attach conversations, microphone recordings or account tokens to update requests. Nexus is contacted when you open its catalogue or mod pages.
+
 Thunderstore receives requests when Rune retrieves the mod catalogue, downloads or opens mod pages. Model providers receive requests for model downloads. PayPal is contacted only when you open the support link. These services have their own privacy policies.
 
 To mute input, use the microphone control or your configured key. Disable spoken replies to retain commands with lower voice resource use. To remove local conversation data, close Rune and its services and remove only the data you intend to discard; uninstall retains it by default. Game saves belong to Valheim and are separate.

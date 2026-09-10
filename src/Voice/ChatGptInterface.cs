@@ -100,13 +100,13 @@ public sealed partial class RuneWindow
         using var dialog = ThemedDialog("Session report · review before sharing", new Size(760, 620));
         using var lifetime = new CancellationTokenSource();
         var report = new TextBox { Multiline = true, ScrollBars = ScrollBars.Vertical, Location = new Point(24, 86), Size = new Size(710, 420), MaxLength = 85000, Text = "What went wrong? Describe what you expected here.\r\n\r\nLast request: " + lastTaskRequest + "\r\n\r\n" + taskTrace.Summary() + "\r\n\r\nRecent task events:\r\n" + taskTrace.Recent() }; RuneTheme.Field(report);
-        report.Text = report.Text.ReplaceLineEndings("\r\n");
+        report.Text = "Rune desktop " + Rune.Shared.Release.Desktop + "\r\n\r\n" + FeedbackPrivacy.Redact(report.Text).ReplaceLineEndings("\r\n");
         dialog.Shown += (_, _) => report.Select(0, 0);
         var status = new Label { Text = "Review or remove anything below. Only this text is sent when you press Analyze.\nAnalysis suggests fixes; it cannot change code or execute game tasks.", Location = new Point(24, 22), Size = new Size(710, 52), ForeColor = RuneTheme.Muted };
         var actions = new FlowLayoutPanel { Location = new Point(24, 526), Size = new Size(710, 68), WrapContents = true };
         AddButton(actions, "Session files", () => { taskTrace.SaveSummary(); System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(taskTrace.SessionFolder) { UseShellExecute = true }); return Task.CompletedTask; });
         AddButton(actions, "Save report locally", () => {
-            string folder = Path.Combine(bridge.Folder, "feedback"); Directory.CreateDirectory(folder); string file = Path.Combine(folder, "feedback-" + DateTime.Now.ToString("yyyyMMdd-HHmmss") + ".txt"); File.WriteAllText(file, report.Text); status.Text = "Saved to bridge / feedback."; return Task.CompletedTask;
+            string folder = Path.Combine(bridge.Folder, "feedback"); Directory.CreateDirectory(folder); string file = Path.Combine(folder, "feedback-" + DateTime.Now.ToString("yyyyMMdd-HHmmss") + ".txt"); report.Text = FeedbackPrivacy.Redact(report.Text); File.WriteAllText(file, report.Text); status.Text = "Saved to bridge / feedback. Common paths, emails and tokens were redacted; review before sharing."; return Task.CompletedTask;
         });
         AddButton(actions, "Analyze with ChatGPT", async () => {
             actions.Enabled = false; status.Text = "Reviewing task evidence with ChatGPT…";
@@ -122,3 +122,4 @@ public sealed partial class RuneWindow
         dialog.ShowDialog(this);
     }
 }
+

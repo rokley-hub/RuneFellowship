@@ -45,6 +45,16 @@ internal static class LauncherPreview
             }
         }
         if (target != window) target.Close();
+        if (page == "Notifications") {
+            var popup = (System.Windows.Controls.Primitives.Popup)window.FindName("NotificationsPopup");
+            var child = (System.Windows.FrameworkElement)popup.Child;
+            child.UpdateLayout();
+            var pixels = new RenderTargetBitmap((int)Math.Ceiling(child.ActualWidth), (int)Math.Ceiling(child.ActualHeight), 96, 96, PixelFormats.Pbgra32);
+            pixels.Render(child);
+            var png = new PngBitmapEncoder(); png.Frames.Add(BitmapFrame.Create(pixels));
+            using (var stream = File.Create(output + ".popup.png")) png.Save(stream);
+            popup.IsOpen = false;
+        }
         window.Close();
         if (!runtime.IsDisposed) runtime.Close();
         app.Shutdown();

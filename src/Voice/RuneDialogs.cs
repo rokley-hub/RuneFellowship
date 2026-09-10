@@ -19,7 +19,7 @@ public partial class LauncherWindow
             MaxHeight = SystemParameters.WorkArea.Height - 32, WindowStartupLocation = WindowStartupLocation.CenterOwner,
             WindowStyle = WindowStyle.None, ResizeMode = ResizeMode.NoResize, AllowsTransparency = true,
             Background = Brushes.Transparent, Foreground = (Brush)FindResource("Bone"), Resources = Resources,
-            FontFamily = FontFamily, FontSize = 13, ShowInTaskbar = false
+            FontFamily = FontFamily, FontSize = 14, ShowInTaskbar = false
         };
         var surface = new Wpf.Border {
             Margin = new Thickness(12), CornerRadius = new CornerRadius(10), BorderThickness = new Thickness(1),

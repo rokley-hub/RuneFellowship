@@ -10,6 +10,9 @@ internal static class Program
 {
     [STAThread] static void Main(string[] args)
     {
+        if (args.Length >= 2 && args[0] == "--visual-state-checks") { RuneWindow.TestVisualState(args[1]); return; }
+        if (args.Length == 3 && args[0] == "--apply-rune-update") { RuneUpdates.RunWorker(Path.GetFullPath(args[1]), int.Parse(args[2])); return; }
+        if (args.Length == 2 && args[0] == "--update-checks") { UpdateChecks.Run(args[1]); return; }
         if (args.Length >= 3 && args[0] is "--reply-voice-check" or "--live-reply-voice-check") { RuneWindow.TestReplyVoice(args[1], args[2], args[0] == "--live-reply-voice-check"); return; }
         if (args.Length >= 3 && args[0] == "--voice-maintenance-check") { RuneWindow.TestVoiceMaintenance(args[1], args[2]); return; }
         if (args.Length >= 3 && args[0] == "--local-service-check") { try { LocalBrainChecks.Run(args[1],args[2]).GetAwaiter().GetResult(); } catch(Exception e) { File.WriteAllText(args[2],e.ToString()); Environment.ExitCode=1; } return; }

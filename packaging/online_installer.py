@@ -117,7 +117,7 @@ def install(source,destination,cache,groups,cancel=None):
             file=download(row,cache,cancel);emit('Preparing '+row['name']);unpack(file,row,stage,cancel)
         receipt={'format':1,'groups':sorted(groups),'downloads':rows}
         (stage/'online-installed.json').write_text(json.dumps(receipt,indent=2))
-        (stage/'files.json').write_text(json.dumps({'format':1,'release':'0.4.26-beta','files':[{'path':p.relative_to(stage).as_posix(),'bytes':p.stat().st_size,'sha256':packages.sha(p)} for p in sorted(stage.rglob('*')) if p.is_file() and p.name!='files.json']},indent=2))
+        (stage/'files.json').write_text(json.dumps({'format':1,'release':json.loads((stage/'release.json').read_text())['version'],'files':[{'path':p.relative_to(stage).as_posix(),'bytes':p.stat().st_size,'sha256':packages.sha(p)} for p in sorted(stage.rglob('*')) if p.is_file() and p.name!='files.json']},indent=2))
         check_cancel(cancel);emit('Finishing installation. Please keep setup open.');packages.install(stage,destination)
     emit('Ready. Open Rune.exe in your installed folder.')
 def main():
