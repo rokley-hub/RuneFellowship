@@ -64,8 +64,30 @@ Packaging scripts currently expect the developer staging layout documented in `p
 
 0.4.41 adds the custom saddled direwolf, riding and combat controls, corrected mount rendering and saddle attachment, a cleaner fellowship display and a useful F8 companion overview. Read [the expanded player guide](docs/PLAYER-GUIDE.md) for riding, food, equipment, tracking and troubleshooting. See [CHANGELOG.md](CHANGELOG.md) for installation and beta limitations.
 
-![Rune Play screen with example companions](docs/images/play.png)
+## Direwolf in motion
 
-![Rune Settings screen](docs/images/settings.png)
+![Saddled direwolf running animation preview](docs/images/direwolf-running-preview.gif)
 
-Actual 0.4.29 desktop renders with isolated example data; these are interface screenshots, not proof of gameplay execution.
+Looping Blender preview of the custom saddled direwolf's run cycle. Captured during development; in-game lighting and the latest body proportions differ. This shows the model animation, not a live gameplay recording.
+
+## Inside the desktop app
+
+Actual Rune interface captures with example companions. Play and Settings are from desktop 0.4.29; Commands is an earlier 0.4.25 capture. Some controls have since changed.
+
+### Play and companion selection
+
+![Rune Play screen](docs/images/play.png)
+
+Choose who receives your voice and typed orders. Companion cards show the fellowship, while notifications highlight updates and setup issues.
+
+### AI and voice settings
+
+![Rune AI settings](docs/images/settings.png)
+
+Choose Local, Hybrid or ChatGPT for conversation and commands. Speech recognition and companion voices stay local.
+
+### Commands and abilities
+
+![Rune commands screen](docs/images/commands.png)
+
+Browse supported intentions, examples and their requirements. Available actions depend on the companion's body, equipment and surroundings.

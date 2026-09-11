@@ -28,7 +28,7 @@ def main():
   if p.is_file() and p.suffix in {'.png','.md'}:entries.append((p,Path('packaging/online-assets')/p.name))
  for p in (project/'release/docs').glob('*.md'):entries.append((p,Path('docs')/p.name))
  for p in (project/'release/docs/images').iterdir():
-  if p.is_file() and p.suffix in {'.png','.md'}:entries.append((p,Path('docs/images')/p.name))
+  if p.is_file() and p.suffix in {'.png','.gif','.md'}:entries.append((p,Path('docs/images')/p.name))
  entries += [(project/'NuGet.Config',Path('NuGet.Config')),(project/'Launcher.cs',Path('Launcher.cs'))]
  for p in (project/'release/public').iterdir():
   if p.is_file():entries.append((p,Path(p.name)))
