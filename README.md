@@ -1,6 +1,6 @@
 # Rune Fellowship
 
-> **Standalone plugin 0.4.43 beta:** F6 supplies basic companion setup, summoning and orders without the desktop app. F8 remains the information overview. This package contains no desktop installer. Fresh-world summoning, orders, mounted idle and save/reload passed isolated background native checks. Physical keyboard input and rendered UI layout remain unverified. Thunderstore upload and moderator approval are pending. The optional desktop release remains 0.4.41 beta. See [setup instructions and validation limits](docs/THUNDERSTORE-LISTING.md).
+> **Standalone plugin 0.4.43 beta:** F6 supplies basic companion setup, summoning and orders without the desktop app. F8 remains the information overview. This package contains no desktop installer. Fresh-world summoning, orders, mounted idle and save/reload passed isolated background native checks. Physical keyboard input and rendered UI layout remain unverified. Thunderstore 0.4.43 is uploaded; the existing listing remains rejected pending moderator review. The optional desktop release remains 0.4.41 beta. See [setup instructions and validation limits](docs/THUNDERSTORE-LISTING.md).
 
 
 ![Rune Fellowship: Viking, dwarf and direwolf](docs/images/rune-fellowship-cover.png)
