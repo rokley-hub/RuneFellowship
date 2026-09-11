@@ -1,12 +1,12 @@
 # Rune Fellowship - player guide
 
-**Desktop 0.4.41 beta / game plugin 0.3.26 / Thunderstore package 0.4.41.** Rune is an unofficial Windows companion app for your own licensed Steam copy of Valheim.
+**Standalone package 0.4.43 beta / game plugin 0.3.27. Optional desktop 0.4.41 beta bundles plugin 0.3.26.** Rune is an unofficial Windows companion app for your own licensed Steam copy of Valheim.
 
-## Standalone plugin candidate 0.4.43 (not yet published)
+## Standalone plugin 0.4.43 beta
 
 Plugin 0.3.27 adds F6 companion setup and basic orders without the desktop app. Install BepInEx, Jotunn and the plugin in an isolated modded profile, enter a solo test world and press F6. Choose one of three slots, name/appearance and Summon. Follow, Stay, Defend, gathering, tool lending, return and unsummoning use the same native executor. F8 remains the information overview. The desktop app is optional for voice, AI dialogue and its advanced workflow. The in-game slots are separate from desktop profiles.
 
-Build and deterministic checks passed, but the fresh-install menu and gameplay still require native validation. Thunderstore's permission is conditional on useful standalone functionality; the candidate is not yet approved or uploaded.
+Background native checks passed in a fresh isolated solo world with the Rune app closed: default Rune/Odin summoning, Follow/Stay orders, opening and closing the menu through its runtime methods, native saddle mounting, mounted idle, occupied-mount dismissal protection, world save/reload, ownership persistence and duplicate-summon prevention. Tested with game plugin 0.3.27, BepInExPack 5.4.2350 and Jotunn 2.29.2. The windowless test does not verify physical F6 keyboard input, rendered menu layout, riding animations, full terrain traversal or optional desktop integration. Thunderstore's permission is conditional on useful standalone functionality; the corrected Thunderstore package still requires upload and moderator review.
 
 ## Optional desktop installation or update
 
