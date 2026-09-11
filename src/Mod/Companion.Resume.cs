@@ -82,7 +82,7 @@ namespace Rune.Mod
             // Validate again after body/permission changes. Resume never replays a placement.
             if (!AllowCrafting && saved.steps.Any(IsCraftStep)) { LastOrderAccepted = false; return "Crafting and building are disabled for this companion. Enable them before resuming this job."; }
             if (!AllowBaseWork && saved.steps.Any(s => s.action == "store_cargo" || s.action == "sort_storage" || s.action == "cook_food" || s.action == "manage_base")) { LastOrderAccepted = false; return "Base work is disabled for this companion."; }
-            if (Appearance == "wolf" && saved.steps.Any(IsCraftStep)) { LastOrderAccepted = false; return "A wolf cannot resume crafting or construction."; }
+            if (Rune.Shared.Rules.IsWolf(Appearance) && saved.steps.Any(IsCraftStep)) { LastOrderAccepted = false; return "A wolf cannot resume crafting or construction."; }
             var remaining = saved.steps.Skip(1).ToArray();
             if (saved.construction) {
                 var origin = new Vector3(saved.x, saved.y, saved.z);

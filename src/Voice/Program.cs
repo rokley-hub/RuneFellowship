@@ -13,6 +13,7 @@ internal static class Program
         if (args.Length >= 2 && args[0] == "--visual-state-checks") { RuneWindow.TestVisualState(args[1]); return; }
         if (args.Length == 3 && args[0] == "--apply-rune-update") { RuneUpdates.RunWorker(Path.GetFullPath(args[1]), int.Parse(args[2])); return; }
         if (args.Length == 2 && args[0] == "--update-checks") { UpdateChecks.Run(args[1]); return; }
+        if (args.Length == 2 && args[0] == "--local-context-checks") { try { LocalBrainContextChecks.Run(args[1]).GetAwaiter().GetResult(); } catch (Exception e) { File.WriteAllText(args[1], "FAILED: " + e); Environment.ExitCode = 1; } return; }
         if (args.Length >= 3 && args[0] is "--reply-voice-check" or "--live-reply-voice-check") { RuneWindow.TestReplyVoice(args[1], args[2], args[0] == "--live-reply-voice-check"); return; }
         if (args.Length >= 3 && args[0] == "--voice-maintenance-check") { RuneWindow.TestVoiceMaintenance(args[1], args[2]); return; }
         if (args.Length >= 3 && args[0] == "--local-service-check") { try { LocalBrainChecks.Run(args[1],args[2]).GetAwaiter().GetResult(); } catch(Exception e) { File.WriteAllText(args[2],e.ToString()); Environment.ExitCode=1; } return; }
@@ -418,7 +419,7 @@ public sealed partial class RuneWindow : Form
         var p = CurrentProfile; reason = "";
         if (!p.CraftAndBuild && action is "craft_item" or "gather_recipe" or "build_boat" or "planbuild_player" or "planbuild_self" or "finish_plan") reason = p.Name + " is not allowed to craft or build. Change that permission in Companions.";
         else if (!p.CookAndSort && action is "cook_food" or "sort_storage" or "manage_base" or "store_cargo") reason = p.Name + " is not allowed to cook or manage storage. Change that permission in Companions.";
-        else if (p.Appearance == "wolf" && action is "craft_item" or "gather_recipe" or "build_boat" or "planbuild_player" or "planbuild_self" or "finish_plan" or "cook_food" or "sort_storage" or "manage_base" or "store_cargo" or "lend_tools" or "equip_gear" or "pickup_equip") reason = p.Name + " has a wolf body and cannot use tools, armour, crafting stations, or storage.";
+        else if (Rune.Shared.Rules.IsWolf(p.Appearance) && action is "craft_item" or "gather_recipe" or "build_boat" or "planbuild_player" or "planbuild_self" or "finish_plan" or "cook_food" or "sort_storage" or "manage_base" or "store_cargo" or "lend_tools" or "equip_gear" or "pickup_equip") reason = p.Name + " has a wolf body and cannot use tools, armour, crafting stations, or storage.";
         return reason.Length == 0;
     }
 }

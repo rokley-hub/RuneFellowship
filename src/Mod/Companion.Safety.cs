@@ -41,13 +41,13 @@ namespace Rune.Mod
                 SetCombatTarget(null); ai.SetFollowTarget(null); ai.StopMoving();
                 SafetySay("I'll wait on safe ground. I cannot sail after you or safely follow over that drop."); return true;
             }
-            var threats = Character.GetAllCharacters().Where(c => c && !c.IsDead() && c != Body && BaseAI.IsEnemy(Body, c) && Vector3.Distance(transform.position, c.transform.position) < 22).ToArray();
+            var threats = Character.GetAllCharacters().Where(c => c && !c.IsDead() && c != Body && !(c is Player) && !c.IsTamed() && BaseAI.IsEnemy(Body, c) && Vector3.Distance(transform.position, c.transform.position) < 22 && ai.CanSeeTarget(c)).ToArray();
             var boss = threats.FirstOrDefault(c => c.IsBoss());
             var playerThreat = Player.GetHealthPercentage() < .55f ? threats.Where(c => (JoinBossFights || !c.IsBoss()) && SafeGround(c.transform.position) &&
                 (Vector3.Distance(Player.transform.position, c.transform.position) < 14 || (c.GetComponent<MonsterAI>() && c.GetComponent<MonsterAI>().GetTargetCreature() == Player)))
                 .OrderBy(c => Vector3.Distance(Player.transform.position, c.transform.position)).FirstOrDefault() : null;
             var decision = CombatPolicy.Decide(CombatStyle, Body.GetHealthPercentage(), Player.GetHealthPercentage(), recovering, protectingPlayer,
-                threats.Length, playerThreat && mode != "stay", boss, boss && boss.InAttack(), JoinBossFights,
+                threats.Length, playerThreat && mode != "stay", boss, boss && boss.InAttack() && Appearance != "dwarf", JoinBossFights,
                 boss && Vector3.Distance(Player.transform.position, boss.transform.position) > 14, followingOrder && mode == "follow");
             recovering = decision.recovering; protectingPlayer = decision.protectPlayer;
             string recovery = recovering ? Body.GetHealth().ToString("F0") + "/" + Body.GetMaxHealth().ToString("F0") + " HP; combat ready at " + (Body.GetMaxHealth() * CombatPolicy.ResumeAt(CombatStyle)).ToString("F1") + " HP" : "";
@@ -58,8 +58,8 @@ namespace Rune.Mod
                 SafetySay("You're hurt. I'm covering you; get to safety."); return false;
             }
             if (recovering && threats.Length == 0) {
-                Body.Heal(Body.GetMaxHealth() / 600f * dt, false);
-                safetyNote = "Recovering while safe work continues (" + recovery + ")";
+                if (Rune.Shared.Rules.IsWolf(Appearance)) Body.Heal(Body.GetMaxHealth() / 600f * dt, false);
+                safetyNote = (!Rune.Shared.Rules.IsWolf(Appearance) && magic.Healing <= 0 ? "Need carried food to heal (" : "Recovering while safe work continues (") + recovery + ")";
             }
             // Once recovery forced a retreat, stay at one safe destination until
             // ready. Do not resume work merely by stepping outside a threat radius.
@@ -69,7 +69,7 @@ namespace Rune.Mod
                     var danger = threats.OrderBy(c => Vector3.Distance(c.transform.position, transform.position)).FirstOrDefault();
                     var away = danger ? transform.position - danger.transform.position : -transform.forward; away.y = 0;
                     var candidate = transform.position + away.normalized * 8;
-                    retreatDestination = SafeGround(candidate) ? candidate : haveDryGround ? lastDryGround : transform.position;
+                    retreatDestination = TacticalRoute(candidate, out var escape) ? escape : FindTacticalPosition(danger ? danger.transform.position : transform.position - transform.forward, false, out escape) ? escape : transform.position;
                     retreatHeld = true;
                 }
                 safetyNote = "Recovering at safe ground (" + recovery + ")";
@@ -84,7 +84,7 @@ namespace Rune.Mod
             if (nearest) {
                 var away = transform.position - nearest.transform.position; away.y = 0; away = away.sqrMagnitude > .1f ? away.normalized : -transform.forward;
                 var destination = transform.position + away * (boss ? 8 : 5);
-                if (SafeGround(destination)) Move(dt, destination, 1); else if (haveDryGround && Vector3.Distance(lastDryGround, nearest.transform.position) > Vector3.Distance(transform.position, nearest.transform.position)) Move(dt, lastDryGround, 1); else ai.StopMoving();
+                if (TacticalRoute(destination, out var escape) || FindTacticalPosition(nearest.transform.position, false, out escape)) Move(dt, escape, 1); else ai.StopMoving();
             }
             SafetySay(recovering ? "I'm hurt. Pulling back until I've recovered." : "Giving that attack some room. I'll rejoin when there is an opening."); return true;
         }

@@ -8,8 +8,8 @@ public sealed partial class RuneWindow
 {
     [DllImport("user32.dll")] private static extern bool ReleaseCapture();
     [DllImport("user32.dll")] private static extern IntPtr SendMessage(IntPtr handle, int message, IntPtr wParam, IntPtr lParam);
-    private readonly string[] skins = { "skeleton", "draugr", "elite", "dwarf", "wolf" };
-    private readonly string[] skinLabels = { "Skeleton", "Draugr", "Elite draugr", "Dwarf · player gear", "Wolf" };
+    private readonly string[] skins = { "skeleton", "draugr", "elite", "dwarf", "wolf", "direwolf" };
+    private readonly string[] skinLabels = { "Skeleton", "Draugr", "Elite draugr", "Dwarf · player gear", "Wolf", "Direwolf · mount" };
     private readonly ComboBox appearanceChoice = new() { DropDownStyle = ComboBoxStyle.DropDownList, Dock = DockStyle.Fill };
     private readonly TextBox profileName = new() { Dock = DockStyle.Fill, MaxLength = 24 };
     private readonly TextBox recognitionName = new() { Dock = DockStyle.Fill, MaxLength = 24 };
@@ -298,7 +298,7 @@ public sealed partial class RuneWindow
 
     private void SetCapabilityAvailability()
     {
-        string skin = appearanceChoice.SelectedIndex >= 0 ? skins[appearanceChoice.SelectedIndex] : "skeleton"; bool wolf = skin == "wolf";
+        string skin = appearanceChoice.SelectedIndex >= 0 ? skins[appearanceChoice.SelectedIndex] : "skeleton"; bool wolf = Rules.IsWolf(skin);
         if (wolf) { storedMaterials.Checked = false; craftBuild.Checked = false; cookSort.Checked = false; }
         foreach (var option in new[] { storedMaterials, craftBuild, cookSort }) if (permissionTiles.TryGetValue(option, out var tile)) tile.Visible = !wolf;
         string currentRole = roleChoice.Text; string[] allowedRoles = wolf ? new[] { "Scout & Gatherer", "Guard & Explorer", "Balanced companion" } : new[] { "Builder & Gatherer", "Scout & Gatherer", "Guard & Explorer", "Quartermaster & Cook", "Balanced companion" };
@@ -308,7 +308,7 @@ public sealed partial class RuneWindow
     }
     private void UpdatePortrait()
     {
-        string skin = appearanceChoice.SelectedIndex >= 0 ? skins[appearanceChoice.SelectedIndex] : CurrentProfile.Appearance; string file = skin == "dwarf" ? "dwarf-" + VoiceGender(CurrentVoiceId) + ".png" : skin + ".png"; if (!portraits.TryGetValue(file, out var image)) { string path = Path.Combine(AppContext.BaseDirectory, "Assets", file); if (File.Exists(path)) { image = RuneTheme.LoadArtwork(path); portraits[file] = image; } } portrait.Image = image; portraitTitle.Text = FriendlyAppearance(skin); appearanceHint.Text = skin switch { "wolf" => "Fast animal companion with a bite attack. Can fight and collect loose items, but cannot wear armour or use tools.", "dwarf" => (VoiceGender(CurrentVoiceId) == "female" ? "Female" : "Male") + " player-style dwarf. Can wear real armour and use weapons and tools.", "skeleton" => "Undead humanoid with native movement and weapons. Can use tools, craft, cook, and manage storage.", "draugr" => "Durable undead worker with native movement and weapons. Can use tools and manage your base.", _ => "Heavy undead warrior with native movement and weapons. Can use tools and perform base work." };
+        string skin = appearanceChoice.SelectedIndex >= 0 ? skins[appearanceChoice.SelectedIndex] : CurrentProfile.Appearance; string file = skin == "dwarf" ? "dwarf-" + VoiceGender(CurrentVoiceId) + ".png" : skin + ".png"; if (!portraits.TryGetValue(file, out var image)) { string path = Path.Combine(AppContext.BaseDirectory, "Assets", file); if (File.Exists(path)) { image = RuneTheme.LoadArtwork(path); portraits[file] = image; } } portrait.Image = image; portraitTitle.Text = FriendlyAppearance(skin); appearanceHint.Text = skin switch { "direwolf" => "Saddled direwolf companion with running and bite animations. Interact with its saddle to ride; use Attack to bite. Cannot wear armour or use tools. Riding is awaiting in-game validation.", "wolf" => "Fast animal companion with a bite attack. Can fight and collect loose items, but cannot wear armour or use tools.", "dwarf" => (VoiceGender(CurrentVoiceId) == "female" ? "Female" : "Male") + " player-style dwarf. Can wear real armour and use weapons and tools.", "skeleton" => "Undead humanoid with native movement and weapons. Can use tools, craft, cook, and manage storage.", "draugr" => "Durable undead worker with native movement and weapons. Can use tools and manage your base.", _ => "Heavy undead warrior with native movement and weapons. Can use tools and perform base work." };
         FitPortraitHeight();
     }
 

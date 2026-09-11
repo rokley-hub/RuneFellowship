@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <AssemblyName>RuneDirewolf</AssemblyName>
+    <Version>0.1.0</Version>
+    <ValheimDir Condition="'$(ValheimDir)' == ''">$(VALHEIM_DIR)</ValheimDir>
+    <DependencyDir Condition="'$(DependencyDir)' == ''">$(MSBuildThisFileDirectory)..\..\..\dependencies\</DependencyDir>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="$(ValheimDir)\valheim_Data\Managed\*.dll" Exclude="$(ValheimDir)\valheim_Data\Managed\System*.dll;$(ValheimDir)\valheim_Data\Managed\mscorlib.dll;$(ValheimDir)\valheim_Data\Managed\netstandard.dll;$(ValheimDir)\valheim_Data\Managed\Mono*.dll"><Private>false</Private></Reference>
+    <Reference Include="BepInEx"><HintPath>$(DependencyDir)BepInExPack\BepInExPack_Valheim\BepInEx\core\BepInEx.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="0Harmony"><HintPath>$(DependencyDir)BepInExPack\BepInExPack_Valheim\BepInEx\core\0Harmony.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="Jotunn"><HintPath>$(DependencyDir)Jotunn\plugins\Jotunn.dll</HintPath><Private>false</Private></Reference>
+    <EmbeddedResource Include="..\..\assets\Direwolf\direwolf.skin" LogicalName="RuneDirewolf.skin" />
+    <EmbeddedResource Include="..\..\assets\Direwolf\direwolf-albedo.png" LogicalName="RuneDirewolf.albedo" />
+  </ItemGroup>
+</Project>

@@ -73,7 +73,7 @@ namespace Rune.Mod
         }
         private void EquipCombat()
         {
-            if (Appearance == "wolf") return;
+            if (Rune.Shared.Rules.IsWolf(Appearance)) return;
             if (Appearance == "dwarf") { ChooseCombatWeapon(combatEnemy); return; }
             if (Appearance != "dwarf") {
                 var native = Body.GetInventory().GetAllItems().FirstOrDefault(i => i.m_customData.ContainsKey("rune.starter") && i.m_dropPrefab && i.m_dropPrefab.name != "AxeStone" && i.GetDamage().GetTotalDamage() > 0);

@@ -1,6 +1,6 @@
 # Rune Fellowship — Windows beta
 
-Rune is an unofficial Valheim companion app. Desktop 0.4.29 uses gameplay plugin 0.3.16. Valheim is required and is not included. This is a beta, not a stable release or an official game product.
+Rune is an unofficial Valheim companion app. Desktop 0.4.41 uses gameplay plugin 0.3.26. Valheim is required and is not included. This is a beta, not a stable release or an official game product.
 
 ## Install
 
@@ -30,3 +30,7 @@ Building compatibility remains unverified with the newer blueprint integration. 
 Broad multiplayer, lower-end/non-NVIDIA hardware, gameplay under heavy GPU load and full fresh installation of every optional voice stack need field testing. Hardware minimums have not been established. Initial model loading can be slow. This beta is unsigned; file hashes detect damage but do not authenticate the publisher. Do not disable Windows security.
 
 Open **Settings → Updates & support** for the player guide, local session report and GitHub issue page. Review any report before sharing; never upload account folders or your entire installation. See [PRIVACY.md](PRIVACY.md).
+
+## Detailed companion and mount guide
+
+See [PLAYER-GUIDE.md](PLAYER-GUIDE.md) for direwolf riding, stopping, jumping and combat; food and supplies; F7/F8 status displays; map tracking; and troubleshooting.

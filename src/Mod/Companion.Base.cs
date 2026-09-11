@@ -31,7 +31,7 @@ namespace Rune.Mod
             if (!UseStoredMaterials && action == "sort_storage") { LastOrderAccepted = false; return "Chest access is disabled. Enable Use stored materials before asking me to rearrange chest contents."; }
             if (action == "set_base") { HasBase = true; basePoint = Player.transform.position; Save(); return "Base remembered. I can use your own accessible chests and cooking stations within twenty metres of here."; }
             if (action != "sort_storage" && action != "store_cargo" && action != "cook_food" && action != "manage_base") return null;
-            if (Appearance == "wolf") return "Wolves can fetch loose items and defend you, but cannot cook or sort chests.";
+            if (Rune.Shared.Rules.IsWolf(Appearance)) return "Wolves can fetch loose items and defend you, but cannot cook or sort chests.";
             if (!HasBase) return "Stand in your base and say set base here first.";
             if (Vector3.Distance(Player.transform.position, basePoint) > 40) return "Come back to base before asking me to manage storage or cook.";
             if (Instances.Any(c => c && c != this && c.Owner == Owner && c.IsBaseMode && Vector3.Distance(c.basePoint, basePoint) < 40)) return "Another companion is managing this base. Ask them to stop first so we do not rearrange each other's work.";

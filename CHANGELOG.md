@@ -1,30 +1,30 @@
-# Rune Fellowship 0.4.29 beta
+# Rune Fellowship 0.4.41 beta
 
-This release updates the Rune Windows app. The gameplay plugin remains **0.3.16**; this is not a new building or combat release.
+Desktop and Thunderstore package **0.4.41**, with gameplay plugin **0.3.26**. This release brings the direwolf and companion improvements developed since public 0.4.29 together in one update.
 
-## What changed
+## Changes
 
-- A quieter charcoal background, lighter headings, clearer labels and compact footer controls.
-- A Rune logo that dims between warm glowing pulses and respects Windows animation preferences.
-- Notifications beside the window controls for app updates, known mod updates, dependency problems and failed checks, with links to the relevant page.
-- Click companion cards on Play to switch the voice target. Fixed a refresh that immediately switched it back and discarded unfinished companion edits.
-- A combined Summon/Unsummon button, focused Settings sections, clearer AI modes and companion editing tabs.
-- Correct spacing between control labels and their keybinding buttons.
-- In-app updates from the official GitHub release feed, with payload checks, preservation of personal data and rollback support.
-- Clearer intent-based command information, real thinking/voice status and reviewed feedback exports with common personal-data patterns redacted.
+- A custom saddled direwolf companion with native wolf movement and combat animation, riding, stamina-aware jumping and biting.
+- Corrections for see-through body faces, materials, saddle attachment, chest/belly shape and torso weights. The rider anchor follows the animated saddle, and visible reins connect to the rider's hands.
+- Mounted movement now sends a full stop when forward input is released; auto-run can be cancelled by manual movement or braking.
+- A model-derived mount HUD icon, wolf-head map marker and a distinct illustrated direwolf companion portrait.
+- Companion combat progression, weapon scoring and tactical choices; dwarf crossbow reloads and offensive elemental projectile magic with food/eitr requirements. Summoning and support staves remain unsupported.
+- More robust local-model context budgeting and incomplete-response handling.
+- A cleaner fellowship overlay without skill levels or the team/proximity row. F8 now shows useful companion information: health, stamina, food, resources, equipment, inventory and current work.
+- Clearer Rune Fellowship cover artwork and a substantially expanded player guide covering mounts, companion needs, controls, profiles and troubleshooting.
 
 ## Install or update
 
-**New users and users on 0.4.26:** download `Rune-Online-Installer-0.4.29-beta.zip`, extract the whole ZIP and run **Install Rune.exe**. Existing users can select their current Rune installation folder. Keep a backup until the update works. Optional runtimes and models download from their original publishers; other authors' game mods are not bundled.
+New users: download **Rune-Online-Installer-0.4.41-beta.zip**, extract the entire ZIP and run **Install Rune.exe**. Existing users can select their current installation. Optional components download from their original publishers.
 
-**Users with in-app updates (0.4.27 or later):** open **Settings → Updates & support → Check for updates**. The update ZIP and its checksum are for Rune's updater; do not use them as a first-time installer. Close Valheim before applying an update.
+Users on desktop 0.4.27 or newer can use **Settings → Updates & support → Check for updates**. Close Valheim before applying it. Older users need the full installer once. The update ZIP is for Rune's updater, not a first-time installation.
 
-**Thunderstore:** the package includes the same complete online installer as **Rune Installer.zip**. Extract that nested ZIP and run **Install Rune.exe**. An external mod manager updates the game integration only; it does not run the desktop installer. Package and desktop version numbers are now aligned at 0.4.29.
+The Thunderstore package includes the same full installer as **Rune Installer.zip**. An external mod manager installs/updates the game plugin but does not run the desktop installer. Keep the app and loaded game plugin current together.
 
-## Verification and limits
+## Verification and limitations
 
-The Windows build, actual WPF page renders/layout checks, Play card selection/draft regressions, notification cases and updater checks passed on the development PC. The clean installer and update archives are checked for integrity and have matching allowlisted source. No personal profiles, credentials, conversations or logs are packaged.
+Release builds, deterministic companion-policy checks and package/source integrity checks are documented in the supplied verification notes. Prior screenshots establish that the custom mount loads and can be ridden. The latest seat, reins and stop corrections have offline/build checks; wider live riding and multiplayer remain beta testing areas. No ordinary player saves were opened for release checks.
 
-The beta is unsigned. There is no second-PC or broad multiplayer validation. Building integration remains a known compatibility limitation: a newer integration loaded but successful construction was not established. The gameplay DLL is unchanged. Local speech/model resource requirements still vary by hardware. Nexus mod versions require website checks. These UI and packaging checks do not prove every action works in a live game.
+Blueprint construction remains an unverified compatibility limitation. This beta is unsigned; there is no second-PC or all-hardware validation. Optional speech/model requirements vary by hardware. Other authors' game mods and Valheim animation files are not bundled.
 
-[Player guide](https://github.com/rokley-hub/RuneFellowship/blob/main/docs/START-HERE.md) · [Report an issue](https://github.com/rokley-hub/RuneFellowship/issues)
+[Expanded player guide](https://github.com/rokley-hub/RuneFellowship/blob/main/docs/PLAYER-GUIDE.md) | [Issues](https://github.com/rokley-hub/RuneFellowship/issues)

@@ -1,24 +1,15 @@
-# Release verification — desktop 0.4.29 / gameplay 0.3.16
+# Release verification - 0.4.41 beta / gameplay 0.3.26
 
-Checked on 10 September 2026 on the development PC. The source and release records distinguish local candidates from public versions.
+Prepared on 11 September 2026. See the accompanying release-check report for this build's results.
 
-## Established
+## Established before packaging
 
-- The desktop builds with the visual refresh. Native WPF renders exercise Settings sections, companion tabs, Mods, Commands and shared dialogs at the minimum 1280 × 760 window size. Layout checks cover control bounds, voice test access, retained companion drafts, per-companion tracking and the public command catalogue.
-- The existing updater has 24 deterministic checks covering source selection, payload hashes, path restrictions, blocked installation while Valheim is open, profile preservation and rollback. Windows PowerShell 5 interrupted-journal recovery and the detached-worker fixture passed for the preceding updater implementation. These establish the tested cases, not a live public download or arbitrary power-failure recovery.
-- The official NuGet feed returned no known vulnerable packages for the desktop project's direct and transitive packages on this date. This is a scoped .NET dependency check, not an audit of every downloaded Python/model/native component. Builds can still display a cached NU1900 restore warning; the separate online audit completed successfully.
-- Earlier default online setup tests installed speech, started services, generated a synthetic Kokoro sentence and transcribed it with Whisper. Text-only startup passed. Existing installer regressions cover damaged downloads and preservation/rollback behavior.
-- Source export uses an allowlist and a privacy scan. The individual source archive includes its own report. No private profiles, credentials or conversations are part of release payloads.
+The custom direwolf loads in the game and has been ridden in user-provided screenshots. Earlier visual reports drove corrected winding/materials, the animated saddle anchor and torso reshaping. Offline sampling of 523 frames across 12 native clips checked the skin and saddle tracking, not the final player pelvis in live gameplay. The latest movement correction sends native Stop rather than an ignored Turn command. Reins use the rider's hand transforms. Source/build verification of these changes does not establish all live scenarios.
 
-## Remaining limits
+Existing deterministic suites cover protocol/capability rules, combat progression and scoring, recording, policy, tactics and ranged resources. The prior updater has 24 checks covering source selection, hashes, paths, blocked installation while Valheim is open, profile preservation and rollback. Earlier isolated installer/speech checks exercised default downloads, app startup, Kokoro synthesis and Whisper recognition. These earlier results are distinct from fresh tests listed in this release's check report.
 
-- No second physical PC or fresh Windows VM test. Broad multiplayer, non-NVIDIA hardware, GPU-heavy gameplay and every optional voice stack's fresh online installation remain unverified.
-- Blueprint compatibility is still a beta limitation. A newer integration loaded its world but failed fixture setup; successful building was not established.
-- The installed 0.4.28 updater transaction succeeded and its normal launcher opened on the development PC. Synthetic Kokoro generation and Whisper recognition passed separately. This does not establish a public-network update download or real microphone/headset playback end to end.
-- The beta is unsigned. Licence notices and source accompany Rune; the engineering review is not blanket legal clearance. Nexus review remains separate.
+Release packaging uses a clean prior installer template, newly built authored binaries, explicit current source assets and public documentation. It does not archive a live installation. Source export excludes private operational notes, profiles, credentials, conversations, logs and build output. The source includes the three generated direwolf resource files required to compile the main plugin. Native game animation files are not distributed.
 
-Do not read successful renders or synthetic command checks as proof that every action works in ordinary gameplay. Keep release notes accurate about these limits.
+## Remaining limitations
 
-## 0.4.29 release additions
-
-The typography, quiet background, notification panel and Play voice-target fix are included. Actual WPF renders use isolated fixture data. The Play click regression failed before the fix and passed afterward for three companions while preserving editor drafts. Notification fixtures cover app/mod updates, dependency issues, failed checks, Nexus limitations and clearing resolved notices. No gameplay changes were introduced.
+The latest mount stopping, rider-seat alignment and reins need further live field testing. The F8 overview and overlay changes have source/build checks. Broad multiplayer, every optional voice stack, a second PC, non-NVIDIA hardware and heavy GPU gameplay remain unverified. Blueprint construction is not confirmed with the newer integration. The beta is unsigned. Offline tests and packaging checks do not demonstrate every action in an ordinary game world. No ordinary save is opened by release checks.

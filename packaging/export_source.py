@@ -13,9 +13,12 @@ def main():
  for folder in ['src','tests','audio','blueprint-library']:
   for p in (project/folder).rglob('*'):
    rel=p.relative_to(project)
+   if rel.as_posix() in {'src/Direwolf/TEST-NOTES.md','src/Direwolf/DEVELOPMENT-BACKLOG.md'}:continue
    if not p.is_file() or excluded.intersection(rel.parts) or p.suffix.lower() not in allowed:continue
    if p.is_symlink() or not p.resolve().is_relative_to(project):raise RuntimeError('Source path escapes project')
    entries.append((p,rel))
+ for name in ['direwolf.skin','direwolf-albedo.png','direwolf-mount-icon.png','README.md']:
+  entries.append((project/'assets/Direwolf'/name,Path('assets/Direwolf')/name))
  for name in ['create-blueprints.py','check-blueprints.py']:entries.append((project/'tools'/name,Path('tools')/name))
  # Only authored packaging sources, not the staged app, downloaded archives or test data.
  for p in (project/'release').iterdir():
@@ -24,7 +27,8 @@ def main():
  for p in (project/'release/online-assets').iterdir():
   if p.is_file() and p.suffix in {'.png','.md'}:entries.append((p,Path('packaging/online-assets')/p.name))
  for p in (project/'release/docs').glob('*.md'):entries.append((p,Path('docs')/p.name))
- for p in (project/'release/docs/images').glob('*.png'):entries.append((p,Path('docs/images')/p.name))
+ for p in (project/'release/docs/images').iterdir():
+  if p.is_file() and p.suffix in {'.png','.md'}:entries.append((p,Path('docs/images')/p.name))
  entries += [(project/'NuGet.Config',Path('NuGet.Config')),(project/'Launcher.cs',Path('Launcher.cs'))]
  for p in (project/'release/public').iterdir():
   if p.is_file():entries.append((p,Path(p.name)))

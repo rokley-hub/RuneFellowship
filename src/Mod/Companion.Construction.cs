@@ -25,7 +25,7 @@ namespace Rune.Mod
         private static BoxCollider placementProbe;
         private string StartConstruction(string action, string name)
         {
-            if (Appearance == "wolf") return RejectCraft("A wolf cannot use building tools.");
+            if (Rune.Shared.Rules.IsWolf(Appearance)) return RejectCraft("A wolf cannot use building tools.");
             if (BuildingHammer() == null) return RejectCraft("I need a usable hammer. Ask me to craft a hammer first, or lend me one.");
             if (PlanBuildAdapter.PlanType == null) return RejectCraft("PlanBuild is not loaded. Install it and restart Valheim.");
             try {

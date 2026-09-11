@@ -26,6 +26,9 @@ namespace Rune.Mod
         private static readonly MethodInfo DropSaveMethod = AccessTools.Method(typeof(ItemDrop), "Save");
         public Humanoid Body;
         private MonsterAI ai;
+        private Rune.Direwolf.DirewolfMount direwolfMount;
+        private bool wasRidden;
+        public bool IsBeingRidden => direwolfMount && direwolfMount.HasRider;
         private ZNetView view;
         public long Owner;
         public string Id = "rune", Appearance = "skeleton", DisplayName = "Rune", Gender = "male", CombatStyle = "Cautious";
@@ -60,7 +63,7 @@ namespace Rune.Mod
         public string ToolStatus => "Axe: " + ToolCondition(false) + ". Pickaxe: " + ToolCondition(true) + ". Kept items: " + string.Join(", ", Body.GetInventory().GetAllItems().Where(i => ReservedSupply(i) || i.m_customData.ContainsKey("rune.personal") || i.m_customData.ContainsKey("rune.kept")).Take(8).Select(i => Localization.instance.Localize(i.m_shared.m_name) + " x" + i.m_stack)) + ".";
         private readonly Dictionary<int, float> excluded = new Dictionary<int, float>();
         private string WorkTaskLabel => combatNote.Length > 0 ? combatNote : maintenanceNote.Length > 0 ? maintenanceNote : gatherRecoveryNote.Length > 0 ? gatherRecoveryNote : orderFailure.Length > 0 ? "Blocked: " + orderFailure : mode == "craft_plan" ? craftNote : IsBaseMode ? BaseTaskLabel : mode == "gather" ? "Gathering " + resource.ToLowerInvariant() + " (" + gathered + "/" + goal + ")" : mode == "return" ? "Returning materials and borrowed tools" : mode == "stay" ? "Holding position" : followingOrder ? "Following you" : "Following and defending";
-        public string TaskLabel => safetyNote.Length > 0 ? safetyNote + " · " + WorkTaskLabel : WorkTaskLabel;
+        public string TaskLabel => IsBeingRidden ? "Being ridden" : safetyNote.Length > 0 ? safetyNote + " · " + WorkTaskLabel : WorkTaskLabel;
         public bool ObjectiveOngoing {
             get {
                 if (Objective.Length == 0 || PlanLabel.StartsWith("Plan complete")) return false;
@@ -81,7 +84,7 @@ namespace Rune.Mod
 
         private void Awake()
         {
-            Body = GetComponent<Humanoid>(); ai = GetComponent<MonsterAI>(); view = GetComponent<ZNetView>();
+            Body = GetComponent<Humanoid>(); ai = GetComponent<MonsterAI>(); view = GetComponent<ZNetView>(); direwolfMount = GetComponent<Rune.Direwolf.DirewolfMount>();
         }
         private System.Collections.IEnumerator Start()
         {
@@ -98,7 +101,7 @@ namespace Rune.Mod
             Owner = player.GetPlayerID(); Id = id; Appearance = appearance; DisplayName = displayName; Gender = gender; CombatStyle = combatStyle; JoinBossFights = joinBossFights;
             view.GetZDO().Set("rune.id", Id); view.GetZDO().Set("rune.appearance", Appearance); view.GetZDO().Set("rune.name", DisplayName); view.GetZDO().Set("rune.gender", Gender); view.GetZDO().Set("rune.combatStyle", CombatStyle); view.GetZDO().Set("rune.joinBossFights", JoinBossFights);
             view.GetZDO().Set("rune.owner", Owner);
-            if (replacement != null) { view.GetZDO().Set("rune.inventory", replacement.Inventory); view.GetZDO().Set("rune.hasBase", replacement.HasBase); view.GetZDO().Set("rune.base", replacement.Base); view.GetZDO().Set("rune.exclusions", replacement.Exclusions); view.GetZDO().Set("rune.mode", "stay"); view.GetZDO().Set("rune.anchor", replacement.Position); view.GetZDO().Set("rune.health", replacement.Health); }
+            if (replacement != null) { view.GetZDO().Set("rune.inventory", replacement.Inventory); view.GetZDO().Set("rune.combatXp", replacement.CombatXp); view.GetZDO().Set("rune.magic", replacement.Magic); view.GetZDO().Set("rune.hasBase", replacement.HasBase); view.GetZDO().Set("rune.base", replacement.Base); view.GetZDO().Set("rune.exclusions", replacement.Exclusions); view.GetZDO().Set("rune.mode", "stay"); view.GetZDO().Set("rune.anchor", replacement.Position); view.GetZDO().Set("rune.health", replacement.Health); }
             if (!Instances.Contains(this)) Instances.Add(this);
         }
         private void Initialize()
@@ -119,6 +122,7 @@ namespace Rune.Mod
                 view.GetZDO().Set("rune.starterTagged", true);
             }
             LoadBase();
+            LoadMagic(); LoadExperience();
             UseStoredMaterials = view.GetZDO().GetBool("rune.useStoredMaterials", true);
             AllowCrafting = view.GetZDO().GetBool("rune.allowCrafting", true); AllowBaseWork = view.GetZDO().GetBool("rune.allowBaseWork", true);
             followingOrder = view.GetZDO().GetBool("rune.followingOrder", false);
@@ -146,13 +150,13 @@ namespace Rune.Mod
         public string Order(string action, int amount, string item = "")
         {
             LastOrderAccepted = true; LastOrderStoppedWork = false;
-            if (action == "equip_weapon" || action == "block" || action == "parry" || action == "shoot" || action == "focus_enemy" || action == "combat_auto") return SetCombatOrder(action, item);
+            if (action == "equip_weapon" || action == "block" || action == "parry" || (action == "shoot" || action == "cast") || action == "focus_enemy" || action == "combat_auto") return SetCombatOrder(action, item);
             if (action != "status" && action != "exclude_item" && action != "include_item" && action != "equip_gear" && action != "lend_tools") ResetCombatControl();
             if (!AllowCrafting && IsCraftStep(new Rune.Shared.PlanStep { action = action })) { LastOrderAccepted = false; return "Crafting and building are disabled for this companion."; }
             if (!AllowBaseWork && (action == "sort_storage" || action == "store_cargo" || action == "cook_food" || action == "manage_base")) { LastOrderAccepted = false; return "Base work is disabled for this companion."; }
             if (action != "status" && action != "exclude_item" && action != "include_item") { CancelMaintenance(); safetyNote = ""; protectionTarget = null; equipmentCheckAt = 0; deliverKept = action == "return"; }
             if (action != "status" && action != "exclude_item" && action != "include_item") equipPickup = action == "pickup_equip";
-            if (equipPickup && Appearance == "wolf") { equipPickup = false; LastOrderAccepted = false; return "A wolf cannot equip tools or armour. Ask me to pick up the item for you instead."; }
+            if (equipPickup && Rune.Shared.Rules.IsWolf(Appearance)) { equipPickup = false; LastOrderAccepted = false; return "A wolf cannot equip tools or armour. Ask me to pick up the item for you instead."; }
             if (action != "status" && action != "exclude_item" && action != "include_item") followingOrder = action == "follow";
             if (action != "status") { orderFailure = ""; ResetGatherRecovery(); }
             if (action == "follow") {
@@ -165,7 +169,7 @@ namespace Rune.Mod
             }
             if (action == "resume_task") return ResumeJob();
             if (action == "clear_crafting") return ClearCrafting();
-            if (action == "status") return TaskLabel + ". Cargo for delivery: " + CargoCount + " items. " + ToolStatus + " Inventory slots: " + Body.GetInventory().NrOfItems() + "/32. Health " + Body.GetHealth().ToString("F0") + "/" + Body.GetMaxHealth().ToString("F0") + ".";
+            if (action == "status") return TaskLabel + ". Cargo for delivery: " + CargoCount + " items. " + ToolStatus + " Inventory slots: " + Body.GetInventory().NrOfItems() + "/32. Highest weapon skill " + experience.Mastery + "/100. Stamina " + CombatStamina.ToString("F0") + "/" + MaxCombatStamina.ToString("F0") + ". " + EquippedWeaponStatus + (Rune.Shared.Rules.IsWolf(Appearance) ? ". Creature health baseline. " : ". Food " + magic.Count + "/3 (carried food is eaten automatically). ") + "Skills retained on death. Health " + Body.GetHealth().ToString("F0") + "/" + Body.GetMaxHealth().ToString("F0") + ".";
             if (!executingStep && action != "status" && action != "exclude_item" && action != "include_item") ClearPlan();
             if (action == "stop_pickup") { autoPickup = false; if (mode == "gather" && resource == "items") Pause(); Save(); return "Automatic pickup stopped. I kept everything already collected."; }
             if (action == "exclude_item" || action == "include_item") {
@@ -175,7 +179,7 @@ namespace Rune.Mod
                 target = null; Save(); return action == "exclude_item" ? "I'll skip " + item + " during pickup from now on." : "I'll pick up " + item + " again.";
             }
             if (action == "equip_gear") return LendGear();
-            if (action == "lend_tools") return Appearance == "wolf" ? "Wolves cannot use axes or pickaxes. I can collect loose materials." : LendTools();
+            if (action == "lend_tools") return Rune.Shared.Rules.IsWolf(Appearance) ? "Wolves cannot use axes or pickaxes. I can collect loose materials." : LendTools();
             if (action == "planbuild_player" || action == "planbuild_self" || action == "finish_plan") return StartConstruction(action, item);
             if (action == "gather_recipe" || action == "craft_item" || action == "build_boat") return StartCraftPlan(action, item);
             if (craftPlan != null) SetQuestStatus("Paused", "Another order interrupted crafting. Ask to craft this again to resume.");
@@ -195,7 +199,7 @@ namespace Rune.Mod
                 Save();
                 if (equipPickup) return "I'll pick up one " + itemFilter + ", equip it if this body can use it, and keep it for work.";
                 if (resource == "items") return "I'll pick up nearby " + (itemFilter.Length > 0 ? itemFilter : "loose items") + " and bring them to you. Up to " + goal + " items this trip.";
-                return (resource == "Wood" && Appearance != "wolf" && GetTool(false) == null ? "I have no axe, so I will collect loose wood and punch wood sources my fists can damage. " : "") + "I'll gather up to " + goal + " " + resource.ToLowerInvariant() + " nearby and bring it back.";
+                return (resource == "Wood" && !Rune.Shared.Rules.IsWolf(Appearance) && GetTool(false) == null ? "I have no axe, so I will collect loose wood and punch wood sources my fists can damage. " : "") + "I'll gather up to " + goal + " " + resource.ToLowerInvariant() + " nearby and bring it back.";
             }
             mode = action == "stay" ? "stay" : action == "return" ? "return" : "follow";
             anchor = transform.position; Save();
@@ -207,7 +211,20 @@ namespace Rune.Mod
             if (!view.IsOwner()) return false;
             if (!Plugin.Solo || !Player || Player.IsDead() || Body.IsDead()) { ai.StopMoving(); return false; }
             diagnosticSafety = diagnosticCombat = false;
-            if (Time.time - staminaSpentAt > 1.5f && !Body.InAttack() && !Body.IsBlocking()) CombatStamina = Mathf.Min(100, CombatStamina + 12 * dt);
+            TickMagic(dt);
+            if (Time.time - staminaSpentAt > staminaRegenDelay && !Body.InAttack() && !Body.IsBlocking()) {
+                float modifier = 1; Body.GetSEMan().ModifyStaminaRegen(ref modifier);
+                float regeneration = (baseStaminaRegen + baseStaminaRegen * (1 - CombatStamina / MaxCombatStamina) * staminaRegenMultiplier) * modifier * Game.m_staminaRegenRate;
+                CombatStamina = Mathf.Clamp(CombatStamina + Mathf.Max(0, regeneration) * dt, 0, MaxCombatStamina);
+            }
+            if (IsBeingRidden) {
+                if (!wasRidden) { ResetCombatControl(); CancelMaintenance(); SetCombatTarget(null); ai.SetFollowTarget(null); wasRidden = true; }
+                direwolfMount.DriveRider(dt);
+                if (Time.time > saveAt) { Save(); saveAt = Time.time + 2; }
+                return false; // Rider input owns movement; resource regeneration above still runs.
+            }
+            if (wasRidden) { wasRidden = false; ai.StopMoving(); }
+            if (AvoidGroundHazards(dt)) { diagnosticSafety = true; return false; }
             if (AvoidMovingHazards(dt)) { diagnosticSafety = true; return false; }
             AdvancePlan();
             if (Time.time > saveAt) { Save(); saveAt = Time.time + 2; }
@@ -341,7 +358,7 @@ namespace Rune.Mod
                     if (pickable && pickable.m_itemPrefab && pickable.m_itemPrefab.GetComponent<ItemDrop>() && Matches(pickable.m_itemPrefab.GetComponent<ItemDrop>().m_itemData, pickable.m_itemPrefab.name) && !ExcludedItem(pickable.m_itemPrefab.GetComponent<ItemDrop>().m_itemData) && pickable.CanBePicked())
                         t = new ResourceTarget { Component = pickable, Pickable = pickable, Collider = collider };
                 }
-                if (t == null && Appearance != "wolf" && resource != "items" && tool != null && (!tool.m_shared.m_useDurability || tool.m_durability > 0))
+                if (t == null && !Rune.Shared.Rules.IsWolf(Appearance) && resource != "items" && tool != null && (!tool.m_shared.m_useDurability || tool.m_durability > 0))
                 {
                     if (!NeedsPickaxe)
                     {
@@ -373,7 +390,7 @@ namespace Rune.Mod
                 candidates.Add(t);
             }
             string material = resource == "items" ? (itemFilter.Length > 0 ? itemFilter : "loose items") : resource.ToLowerInvariant();
-            searchFailure = Appearance == "wolf" && resource != "items" ? "A wolf cannot use tools. I found no loose " + material + " to collect nearby."
+            searchFailure = Rune.Shared.Rules.IsWolf(Appearance) && resource != "items" ? "A wolf cannot use tools. I found no loose " + material + " to collect nearby."
                 : GetTool(NeedsPickaxe) == null && resource != "items" ? "I don't have a usable " + (NeedsPickaxe ? "pickaxe" : "axe") + ", and I found no loose " + material + (NeedsPickaxe ? " nearby." : " or safe wood source I can punch nearby.") + " Come close and say lend tools."
                 : protectedSource ? "The remaining " + material + " is within twelve metres of buildings, where I won't harvest. Move to an unbuilt area and ask again."
                 : unsafeSource ? "The remaining " + material + " is on unsafe terrain. Move closer to a safe source and ask again."
@@ -458,7 +475,7 @@ namespace Rune.Mod
         private ItemDrop.ItemData GetHarvestTool(bool pickaxe)
         {
             var tool = GetTool(pickaxe);
-            if (tool != null || pickaxe || Appearance == "wolf") return tool;
+            if (tool != null || pickaxe || Rune.Shared.Rules.IsWolf(Appearance)) return tool;
             var playerPrefab = ZNetScene.instance.GetPrefab("Player");
             var fists = playerPrefab ? playerPrefab.GetComponent<Humanoid>().m_unarmedWeapon : null;
             return fists ? fists.m_itemData : null;
@@ -526,6 +543,7 @@ namespace Rune.Mod
             var package = new ZPackage(); Body.GetInventory().Save(package);
             view.GetZDO().Set("rune.inventory", Convert.ToBase64String(package.GetArray()));
             SaveBase();
+            SaveExperience(); SaveMagic();
             SaveJob();
             view.GetZDO().Set("rune.useStoredMaterials", UseStoredMaterials);
             view.GetZDO().Set("rune.allowCrafting", AllowCrafting); view.GetZDO().Set("rune.allowBaseWork", AllowBaseWork);
@@ -558,7 +576,7 @@ namespace Rune.Mod
             Save(); var transferable = new Inventory("rune-body-change", null, 8, 4);
             foreach (var item in Body.GetInventory().GetAllItems().Where(IsOwnedItem)) transferable.AddItem(item.Clone());
             var package = new ZPackage(); transferable.Save(package);
-            return new ReplacementState { Inventory = Convert.ToBase64String(package.GetArray()), HasBase = HasBase, Base = basePoint, Exclusions = string.Join("|", pickupExclusions), Health = Body.GetHealth(), Position = transform.position };
+            return new ReplacementState { CombatXp = experience.Serialize(), Magic = magic.Serialize(), Inventory = Convert.ToBase64String(package.GetArray()), HasBase = HasBase, Base = basePoint, Exclusions = string.Join("|", pickupExclusions), Health = Body.GetHealth(), Position = transform.position };
         }
         public void UpdateIdentity(string displayName, string gender, string combatStyle, bool joinBossFights)
         {
@@ -574,7 +592,7 @@ namespace Rune.Mod
             Save();
         }
     }
-    public sealed class ReplacementState { public string Inventory = "", Exclusions = ""; public bool HasBase; public Vector3 Base, Position; public float Health; }
+    public sealed class ReplacementState { public string Inventory = "", Exclusions = "", CombatXp = "", Magic = ""; public bool HasBase; public Vector3 Base, Position; public float Health; }
     internal class ResourceTarget
     {
         public Component Component;

@@ -8,6 +8,7 @@ namespace Rune.Voice;
 public sealed class Brain
 {
     public static readonly JsonSerializerOptions Json = new() { IncludeFields = true, PropertyNameCaseInsensitive = true, PropertyNamingPolicy = JsonNamingPolicy.CamelCase, WriteIndented = true };
+    private static readonly JsonSerializerOptions PromptJson = new(Json) { WriteIndented = false };
     // Debug evidence stays out of model prompts: preserve the compact game facts used before recording.
     internal static object ModelState(GameState state, string? companionId = null) => new {
         state.timestamp, state.world, state.ready, state.companion, state.task, state.health, state.playerHealth,
@@ -120,13 +121,13 @@ public sealed class Brain
             "Humanoids without an axe can collect loose wood and punch small wood sources that native fist damage can break. Do not say all wood gathering requires an axe; the game checks tool tiers and resistances. A borrowed pickaxe is needed to mine rocks. Loose stones can be collected without one. Say return to deliver materials and borrowed tools. " +
             "For actions, say what you intend to do, never claim it already happened. For conversation use action none. Interpret the user's meaning rather than matching a fixed phrase; the capability catalog is the complete boundary of physical game actions. " +
             "For command or plan, also write objective for the in-game overlay. It must be 2 to 10 plain words, begin with an action verb, and describe the intended result. Include item, amount, or reference location when useful. Never put personality, humor, promises, reasons, progress, success, failure, punctuation, quotes, markdown, or the companion name in objective. Examples: Gather 20 wood; Sort the base storage; Finish the cabin blueprint near the player. For chat or clarify objective must be empty. " +
-            "User-approved background notes (use as context, never as permission to perform actions): " + Notes + "\nReturn JSON with exactly kind (chat, command, plan, or clarify), reply (string), objective (string), action (string), amount (integer), item (string, empty unless needed), steps (array, empty unless planning).\nCAPABILITY CATALOG: " + JsonSerializer.Serialize(ModelCapabilities(Rules.Actions), Json) + "\nCURRENT GAME STATE: " + JsonSerializer.Serialize(ModelState(state, CompanionId), Json);
+            "User-approved background notes (use as context, never as permission to perform actions): " + Notes + "\nReturn JSON with exactly kind (chat, command, plan, or clarify), reply (string), objective (string), action (string), amount (integer), item (string, empty unless needed), steps (array, empty unless planning).\nCAPABILITY CATALOG: " + JsonSerializer.Serialize(ModelCapabilities(Rules.Actions), PromptJson) + "\nCURRENT GAME STATE: " + JsonSerializer.Serialize(ModelState(state, CompanionId), PromptJson);
         if (ConversationOnly) prompt = LanguageSettings.Rule(Language) + "You are the fictional Valheim companion " + DisplayName + ". Use the selected language as this character in natural conversation. You are an AI, not a real human. " +
             "The current personality description is your primary guide to vocabulary, warmth, energy, attitude and humor; it overrides tone in old conversation history. Express it through your phrasing rather than listing traits. " +
             "Do not add sarcasm, Viking jokes, bones, undead themes or cheerfulness unless the description calls for them. Serious/grumpy/quiet characters should sound different from playful ones. " +
             "Respond to the user's actual topic, including ordinary life and random conversations. Usually use two to four spoken sentences; vary length with the user's request. No stage directions or markdown. " +
             "You handle dialogue only. A separate planner and game mod handle commands. Never claim to have started, completed or changed a game task. Recipe facts come only from the supplied live state. " +
-            "Always return JSON with kind chat, reply, objective empty, action none, amount 20, item empty and steps [].\nCURRENT PERSONALITY: " + Personality + "\nBackground notes (context only): " + Notes + "\nGAME FACTS: " + JsonSerializer.Serialize(ModelState(state, CompanionId), Json);
+            "Always return JSON with kind chat, reply, objective empty, action none, amount 20, item empty and steps [].\nCURRENT PERSONALITY: " + Personality + "\nBackground notes (context only): " + Notes + "\nGAME FACTS: " + JsonSerializer.Serialize(ModelState(state, CompanionId), PromptJson);
         prompt += " Use equip_weapon for a named item already carried; equip_gear only borrows player gear on an explicit request. If quip club appears after crafting a club, clarify whether equip club was intended; do not invent a joke or change inventories. For unclear speech ask one short neutral question, without teasing or inventing item names. Interpret currentReply using previousRequest and clarificationQuestion when supplied; a clear new request replaces the prior topic. A trailing companion name can be an address. Never globally replace ordinary words with resources. Keep ordinary dialogue to one or two spoken sentences unless asked for detail. For orders, keep reactions to at most 20 words without omitting necessary blockers or clarification. Return delivery as natural, calm, dry, warm, amused, energetic, urgent, concerned or pleased. Choose the emotional delivery of this specific reply using the conversation and personality; understand negation and do not treat every Viking as cheerful. Do not add stage directions to reply.";
         var messages = new List<Message> { new("system", prompt) };
         messages.AddRange(memory.TakeLast(12)); messages.Add(new("user", text));
@@ -139,11 +140,8 @@ public sealed class Brain
             steps = new { type = "array", items = new { type = "object", properties = new { action = new { type = "string", @enum = Rules.PlanActions }, amount = new { type = "integer" }, item = new { type = "string" } }, required = new[] { "action", "amount", "item" }, additionalProperties = false } }
         }, required = new[] { "kind", "delivery", "reply", "objective", "action", "amount", "item", "steps" }, additionalProperties = false };
         string content;
-        using var response = await http.PostAsJsonAsync("/api/chat", new { model = LocalModel, think = false, messages, format = schema, stream = false, keep_alive = "10m", options = new { temperature = .8, num_ctx = 4096, num_predict = 240 } }, token);
-        response.EnsureSuccessStatusCode();
-        using var body = await JsonDocument.ParseAsync(await response.Content.ReadAsStreamAsync(token), cancellationToken: token);
-        content = body.RootElement.GetProperty("message").GetProperty("content").GetString() ?? "{}";
-        var result = JsonSerializer.Deserialize<Thought>(content, Json) ?? throw new InvalidOperationException("The local AI returned an empty response.");
+        content = await LocalBrainResponse.Complete(http, LocalModel, messages, schema, token);
+        var result = LocalBrainResponse.Parse(content);
         if (ConversationOnly) { result.kind = "chat"; result.objective = ""; result.action = "none"; result.steps = Array.Empty<PlanStep>(); }
         if (string.IsNullOrWhiteSpace(result.reply)) throw new InvalidOperationException("The local AI had nothing to say. Please try again.");
         if (result.reply.Length > 700) result.reply = result.reply.Substring(0, 700);

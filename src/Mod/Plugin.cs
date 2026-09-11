@@ -33,15 +33,13 @@ namespace Rune.Mod
         private bool resetControlsPosition;
         private bool controlsPositioned;
         private string controlCompanion = "rune";
-        private int controlAppearance;
-        private string input = "";
         public string NoteCompanion = "";
-        public string Note = "Press F8 for Rune's controls. Use the voice app for push-to-talk or always-on chat.";
+        public string Note = "Press F8 for your companion overview. Use the voice app for push-to-talk or always-on chat.";
         public static bool Solo => ZNet.instance && ZNet.instance.IsServer() && !ZNet.instance.IsDedicated() && ZNet.instance.GetPeers().Count == 0;
         public static string World => ZNet.instance ? ZNet.instance.GetWorldUID().ToString() : "";
         public static Companion Current => Find("rune");
         public static Companion Find(string id) => Companion.Instances.FirstOrDefault(c => c && c.Id == id && c.Owner == (Player.m_localPlayer ? Player.m_localPlayer.GetPlayerID() : 0));
-        public static string PrefabFor(string appearance) => appearance == "draugr" ? "RuneCompanionDraugr" : appearance == "elite" ? "RuneCompanionElite" : appearance == "dwarf" ? "RuneCompanionDwarf" : appearance == "wolf" ? "RuneCompanionWolf" : PrefabName;
+        public static string PrefabFor(string appearance) => appearance == "draugr" ? "RuneCompanionDraugr" : appearance == "elite" ? "RuneCompanionElite" : appearance == "dwarf" ? "RuneCompanionDwarf" : appearance == "direwolf" ? "RuneCompanionDirewolf" : appearance == "wolf" ? "RuneCompanionWolf" : PrefabName;
 
         private void Awake()
         {
@@ -61,8 +59,8 @@ namespace Rune.Mod
         {
             try
             {
-                foreach (var skin in new[] { "skeleton", "draugr", "elite", "dwarf", "wolf" }) {
-                var creature = new CustomCreature(PrefabFor(skin), skin == "wolf" ? "Wolf" : skin == "draugr" ? "Draugr" : skin == "elite" ? "Draugr_Elite" : "Skeleton_NoArcher", new CreatureConfig { Name = "Rune", Faction = Character.Faction.Players });
+                foreach (var skin in new[] { "skeleton", "draugr", "elite", "dwarf", "wolf", "direwolf" }) {
+                var creature = new CustomCreature(PrefabFor(skin), Rules.IsWolf(skin) ? "Wolf" : skin == "draugr" ? "Draugr" : skin == "elite" ? "Draugr_Elite" : "Skeleton_NoArcher", new CreatureConfig { Name = "Rune", Faction = Character.Faction.Players });
                 var h = creature.Prefab.GetComponent<Humanoid>();
                 var axe = PrefabManager.Instance.GetPrefab("AxeStone");
                 if (!axe) throw new InvalidOperationException("AxeStone prefab unavailable.");
@@ -70,7 +68,7 @@ namespace Rune.Mod
                 h.m_faction = Character.Faction.Players;
                 h.m_health = 150;
                 h.m_damageModifiers = new HitData.DamageModifiers();
-                if (skin != "wolf") {
+                if (!Rules.IsWolf(skin)) {
                     var nativeWeapon = h.m_defaultItems.Concat(h.m_randomWeapon).FirstOrDefault(g => g && g.GetComponent<ItemDrop>() && g.GetComponent<ItemDrop>().m_itemData.GetDamage().GetTotalDamage() > 0);
                     h.m_defaultItems = nativeWeapon && skin != "dwarf" ? new[] { axe, nativeWeapon } : new[] { axe };
                 }
@@ -80,6 +78,7 @@ namespace Rune.Mod
                 h.m_randomSets = Array.Empty<Humanoid.ItemSet>();
                 h.m_randomItems = Array.Empty<Humanoid.RandomItem>();
                 if (skin == "dwarf") DwarfAppearance.Configure(creature.Prefab);
+                if (skin == "direwolf") Rune.Direwolf.DirewolfSetup.Configure(creature.Prefab);
                 var ai = creature.Prefab.GetComponent<MonsterAI>();
                 ai.m_attackPlayerObjects = false;
                 // This is an inactive prefab, without a live ZNetView/ZDO.
@@ -89,7 +88,7 @@ namespace Rune.Mod
                 despawnField.SetValue(ai, false);
                 ai.m_randomMoveRange = 0; ai.m_avoidWater = true; ai.m_avoidFire = true; ai.m_avoidLava = true;
                 ai.m_viewRange = 18;
-                ai.m_consumeItems = new List<ItemDrop>();
+                if (skin != "direwolf") ai.m_consumeItems = new List<ItemDrop>();
                 var drops = creature.Prefab.GetComponent<CharacterDrop>();
                 if (drops) drops.m_drops = new List<CharacterDrop.Drop>();
                 creature.Prefab.GetComponent<ZNetView>().m_persistent = true;
@@ -139,13 +138,15 @@ namespace Rune.Mod
             string error = Rules.Validate(c, World, Rules.Now);
             if (!Solo || !Player.m_localPlayer || Player.m_localPlayer.IsDead()) error = "Open a solo world with a living character first.";
             if (error.Length > 0) { reply.message = error; return reply; }
-            if (Find(c.companionId)) ApplyPermissions(Find(c.companionId), c);
+            var ridden = Find(c.companionId);
+            if (ridden && !Rules.CanChangeRiddenBody(c.action, ridden.IsBeingRidden, ridden.Appearance, c.appearance)) { reply.message = "Dismount before changing or unsummoning this companion."; return reply; }
+            if (ridden) ApplyPermissions(ridden, c);
             if (c.action == "summon")
             {
                 var existing = Find(c.companionId);
                 if (existing) { existing.UpdateIdentity(c.displayName, c.gender, c.combatStyle, c.joinBossFights); if (existing.Appearance != c.appearance) return ReplaceAppearance(existing, c, reply); reply.message = c.displayName + " is already here and their profile is up to date."; reply.accepted = true; return reply; }
                 var zdos = new List<ZDO>(); int index = 0;
-                foreach (string skin in new[] { "skeleton", "draugr", "elite", "dwarf", "wolf" }) {
+                foreach (string skin in new[] { "skeleton", "draugr", "elite", "dwarf", "wolf", "direwolf" }) {
                     index = 0; while (!ZDOMan.instance.GetAllZDOsWithPrefabIterative(PrefabFor(skin), zdos, ref index)) { }
                 }
                 var saved = zdos.FirstOrDefault(z => z.GetLong("rune.owner", 0) == Player.m_localPlayer.GetPlayerID() && z.GetString("rune.id", "rune") == c.companionId);
@@ -196,7 +197,7 @@ namespace Rune.Mod
                 string name = existing.DisplayName; existing.DropPersonalEquipment(); ZNetScene.instance.Destroy(existing.gameObject); reply.accepted = true; reply.message = name + " was unsummoned from this world. Any personal equipment was left on the ground."; Note = reply.message; return reply;
             }
             var zdos = new List<ZDO>(); int index = 0;
-            foreach (string skin in new[] { "skeleton", "draugr", "elite", "dwarf", "wolf" }) { index = 0; while (!ZDOMan.instance.GetAllZDOsWithPrefabIterative(PrefabFor(skin), zdos, ref index)) { } }
+            foreach (string skin in new[] { "skeleton", "draugr", "elite", "dwarf", "wolf", "direwolf" }) { index = 0; while (!ZDOMan.instance.GetAllZDOsWithPrefabIterative(PrefabFor(skin), zdos, ref index)) { } }
             var saved = zdos.FirstOrDefault(z => z.GetLong("rune.owner", 0) == Player.m_localPlayer.GetPlayerID() && z.GetString("rune.id", "") == command.companionId);
             if (saved == null) { reply.accepted = true; reply.message = command.displayName + " is already unsummoned in this world."; return reply; }
             try {
@@ -236,40 +237,40 @@ namespace Rune.Mod
             DrawOverlay();
             if (show && Player.m_localPlayer) {
                 if (!controlsPositioned) { window.position = new Vector2(Mathf.Max(8, Screen.width - window.width - 24), 80); controlsPositioned = true; }
-                window = KeepOnScreen(GUILayout.Window(778123, KeepOnScreen(window), DrawWindow, "RUNE FELLOWSHIP — companions & commands"));
+                window = KeepOnScreen(GUILayout.Window(778123, KeepOnScreen(window), DrawWindow, "RUNE FELLOWSHIP — companion overview"));
                 if (resetControlsPosition) { window.position = new Vector2(Mathf.Max(8, Screen.width - window.width - 24), 80); resetControlsPosition = false; }
             }
         }
+        private Vector2 overviewScroll;
+        private float overviewRefreshAt;
+        private Companion overviewCompanion;
+        private string[] overviewLines = Array.Empty<string>();
+        private GUIStyle overviewText;
         private void DrawWindow(int id)
         {
-            GUILayout.Label("CHOOSE COMPANION");
-            GUILayout.BeginHorizontal();
-            var members = Companion.Instances.Where(c => c && c.Ready && Player.m_localPlayer && c.Owner == Player.m_localPlayer.GetPlayerID()).Select(c => c.Id).Distinct().ToList(); if (members.Count == 0) members.AddRange(new[] { "rune", "eira", "bjorn" }); if (!members.Contains(controlCompanion)) controlCompanion = members[0];
-            foreach (string member in members) if (GUILayout.Button((controlCompanion == member ? "● " : "") + (Find(member) ? Find(member).DisplayName : Rules.Name(member)), GUILayout.Height(34))) controlCompanion = member;
-            GUILayout.EndHorizontal();
-            var selected = Find(controlCompanion);
-            GUILayout.Label(selected ? selected.DisplayName + " · " + selected.Appearance + " · " + selected.Body.GetHealth().ToString("F0") + " HP\n" + selected.TaskLabel : "Choose an appearance before first summon:");
-            controlAppearance = GUILayout.SelectionGrid(selected ? Array.IndexOf(new[] { "skeleton", "draugr", "elite", "dwarf", "wolf" }, selected.Appearance) : controlAppearance, new[] { "Skeleton", "Draugr", "Elite", "Dwarf", "Wolf" }, 5);
-            GUILayout.Label(Note, new GUIStyle(GUI.skin.label) { wordWrap = true });
-            GUILayout.BeginHorizontal();
-            foreach (string action in new[] { "summon", "follow", "stay", "return", "dismiss" }) if (GUILayout.Button(action == "dismiss" ? "Unsummon" : action)) LocalOrder(action);
-            GUILayout.EndHorizontal();
-            GUILayout.BeginHorizontal();
-            if (GUILayout.Button("Gather 20 wood")) LocalOrder("gather_wood");
-            if (GUILayout.Button("Gather 20 stone")) LocalOrder("gather_stone");
-            if (GUILayout.Button("Lend tools")) LocalOrder("lend_tools");
-            GUILayout.EndHorizontal();
-            input = GUILayout.TextField(input, 300);
-            if (GUILayout.Button("Send command")) { var c = Rules.Parse(input); if (c == null) Note = "Use Rune Voice for conversation. Try: gather 20 wood."; else LocalOrder(c.action, c.amount, c.item); input = ""; }
-            GUILayout.Label("Drag the Fellowship overlay by its header while these controls are open. F8 locks it in place.\nLend tools transfers one axe and one pickaxe. Say return to get them back.");
+            if (overviewText == null) overviewText = new GUIStyle(GUI.skin.label) { wordWrap = true, fontSize = 14 };
+            var members = Companion.Instances.Where(c => c && c.Ready && Player.m_localPlayer && c.Owner == Player.m_localPlayer.GetPlayerID()).ToArray();
+            if (members.Length > 0 && !members.Any(c => c.Id == controlCompanion)) controlCompanion = members[0].Id;
+            GUILayout.Label("COMPANIONS");
+            for (int start=0; start<members.Length; start+=3) {
+                GUILayout.BeginHorizontal();
+                foreach (var member in members.Skip(start).Take(3))
+                    if (GUILayout.Button((controlCompanion == member.Id ? "● " : "") + member.DisplayName, GUILayout.Height(32))) controlCompanion=member.Id;
+                GUILayout.EndHorizontal();
+            }
+            var selected = members.FirstOrDefault(c => c.Id == controlCompanion);
+            if (selected != overviewCompanion || Time.unscaledTime >= overviewRefreshAt) {
+                if (selected != overviewCompanion) overviewScroll=Vector2.zero;
+                overviewCompanion=selected; overviewRefreshAt=Time.unscaledTime+.5f;
+                overviewLines=selected ? selected.OverviewLines() : new[] { "No companion nearby. Manage your fellowship in Rune." };
+            }
+            overviewScroll=GUILayout.BeginScrollView(overviewScroll, GUILayout.Height(Mathf.Clamp(Screen.height-240,140,340)));
+            foreach (var line in overviewLines) GUILayout.Label(line,overviewText);
+            GUILayout.EndScrollView();
+            GUILayout.Label("F8 closes this overview. Drag the Fellowship overlay by its header while this is open.",overviewText);
             if (GUILayout.Button("Reset UI positions")) { overlayPosition = new Vector2(-1, -1); overlayPositionDirty = true; SaveOverlayPosition(); resetControlsPosition = true; }
             if (GUILayout.Button("Close")) { show = false; SaveOverlayPosition(); GUIManager.BlockInput(false); }
             GUI.DragWindow(new Rect(0, 0, window.width, 24));
-        }
-        private void LocalOrder(string action, int amount = 20, string item = "")
-        {
-            var selected = Find(controlCompanion); var reply = Execute(new Command { id = System.Guid.NewGuid().ToString(), world = World, timestamp = Rules.Now, action = action, amount = amount, item = item, companionId = controlCompanion, displayName = selected ? selected.DisplayName : Rules.Name(controlCompanion), gender = selected ? selected.Gender : controlCompanion == "eira" ? "female" : "male", combatStyle = selected ? selected.CombatStyle : "Cautious", joinBossFights = selected ? selected.JoinBossFights : true, appearance = new[] { "skeleton", "draugr", "elite", "dwarf", "wolf" }[controlAppearance] });
-            Note = reply.message;
         }
         private void OnDestroy() { RemoveCompanionPins(); if (show) GUIManager.BlockInput(false); harmony?.UnpatchSelf(); CreatureManager.OnVanillaCreaturesAvailable -= RegisterCreature; }
     }

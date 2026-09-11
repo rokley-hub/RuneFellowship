@@ -1,6 +1,6 @@
 # Updating Rune
 
-Desktop 0.4.29 includes the updater introduced in 0.4.27. It checks the official rokley-hub/RuneFellowship GitHub releases once at startup; **Settings → Updates & support → Check for updates** checks again. Checking does not install anything. Beta clients can receive newer beta releases; stable clients exclude prereleases.
+Desktop 0.4.41 includes the updater introduced in 0.4.27. It checks the official rokley-hub/RuneFellowship GitHub releases once at startup; **Settings → Updates & support → Check for updates** checks again. Checking does not install anything. Beta clients can receive newer beta releases; stable clients exclude prereleases.
 
 Close Valheim and choose the available update. Rune saves the selected companion edits, waits for its launcher to close, stops only its own services, applies authored app files and the matching game plugin, and reopens. Rune-owned mod profiles keep their enabled/disabled plugin state. External-manager profiles must update their plugin in that manager.
 

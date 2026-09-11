@@ -6,7 +6,7 @@ namespace Rune.Shared
 {
     public static class Release
     {
-        public const string Gameplay = "0.3.16", Desktop = "0.4.29";
+        public const string Gameplay = "0.3.26", Desktop = "0.4.41";
         public const int Protocol = 2;
     }
     [Serializable] public class GameState
@@ -94,6 +94,10 @@ namespace Rune.Shared
     }
     public static class Rules
     {
+        public static readonly string[] Appearances = { "skeleton", "draugr", "elite", "dwarf", "wolf", "direwolf" };
+        public static bool IsWolf(string appearance) => appearance == "wolf" || appearance == "direwolf";
+        public static bool CanChangeRiddenBody(string action, bool hasRider, string current, string next) =>
+            !hasRider || !(action == "dismiss" || ((action == "summon" || action == "update_profile") && current != next));
         public static string BlueprintKey(string value) => Regex.Replace((value ?? "").ToLowerInvariant(), @"[\s_\-]+", "").Trim('"');
         public const int MaxAmount = 100;
         public static long Now => DateTimeOffset.UtcNow.ToUnixTimeSeconds();
@@ -104,7 +108,8 @@ namespace Rune.Shared
             new Capability { action="equip_weapon", group="Combat & equipment", example="switch to club", description="Equip a named item already in the companion inventory. Never borrows player gear; checks body, durability and bow ammunition." },
             new Capability { action="block", group="Combat & equipment", example="hold your shield up", description="Dwarf holds a native guard with finite stamina. Requires usable blocking equipment." },
             new Capability { action="parry", group="Combat & equipment", example="parry their attacks", description="Dwarf attempts timed native parries against visible windups. Equipment, facing, stamina and timing can cause failure." },
-            new Capability { action="shoot", group="Combat & equipment", example="shoot arrows", description="Dwarf uses a carried bow and consumes matching arrows against nearby hostile creatures. No player targeting." },
+            new Capability { action="cast", group="Combat & equipment", example="use elemental magic", description="Dwarf uses a carried offensive elemental projectile staff. Consumes carried eitr food and finite eitr. Summoning and support staves are not yet supported." },
+            new Capability { action="shoot", group="Combat & equipment", example="shoot arrows", description="Dwarf uses a carried bow or crossbow with matching ammunition. Crossbows require timed stamina-consuming reloads. No player targeting." },
             new Capability { action="focus_enemy", group="Combat & equipment", example="focus on the skeleton", description="Prioritize a named nearby hostile creature while respecting terrain, boss permissions and safety." },
             new Capability { action="combat_auto", group="Combat & equipment", example="choose your weapons", description="Release a requested weapon or guard preference and resume automatic combat choices." },
 
@@ -189,7 +194,7 @@ namespace Rune.Shared
             if (command.objective != null && command.objective.Length > 96) return "The task description is too long.";
             if (command.action == "run_plan") { string planError = ValidatePlan(command.steps); if (planError.Length > 0) return planError; }
             if (!IsCompanion(command.companionId)) return "Choose a valid companion profile.";
-            if (command.appearance != "skeleton" && command.appearance != "draugr" && command.appearance != "elite" && command.appearance != "dwarf" && command.appearance != "wolf") return "Choose an available appearance.";
+            if (!Appearances.Contains(command.appearance)) return "Choose an available appearance.";
             if (string.IsNullOrWhiteSpace(command.displayName) || command.displayName.Length > 24 || !Regex.IsMatch(command.displayName, @"^[\p{L}\p{M}][\p{L}\p{M}0-9' -]{0,23}$")) return "Choose a companion name using letters, numbers, spaces, apostrophes, or hyphens.";
             if (command.gender != "male" && command.gender != "female") return "Choose a male or female companion voice.";
             if (command.combatStyle != "Cautious" && command.combatStyle != "Balanced" && command.combatStyle != "Aggressive") return "Choose a cautious, balanced, or aggressive combat style.";
@@ -269,7 +274,8 @@ namespace Rune.Shared
             if (Regex.IsMatch(s, @"\b(task ?list|plan)\b") || Regex.IsMatch(s, @"^make (me|us) (laugh|smile|happy|a joke|a story)\b")) return null;
             if (Regex.IsMatch(s, @"^(?:block|hold (?:your |the )?(?:shield|guard)(?: up)?|raise (?:your |the )?shield)$")) return new Command { action = "block" };
             if (Regex.IsMatch(s, @"^(?:parry|parry (?:their |the |incoming )?attacks)$")) return new Command { action = "parry" };
-            if (Regex.IsMatch(s, @"^(?:shoot|shoot arrows|fire arrows|shoot (?:at )?(?:the )?enemies)$")) return new Command { action = "shoot" };
+            if (Regex.IsMatch(s, @"^(?:cast|cast spells|use magic|use elemental magic|cast elemental spells)$")) return new Command { action = "cast" };
+            if (Regex.IsMatch(s, @"^(?:shoot|shoot bolts|fire bolts|shoot crossbow|shoot arrows|fire arrows|shoot (?:at )?(?:the )?enemies)$")) return new Command { action = "shoot" };
             if (Regex.IsMatch(s, @"^(?:stop blocking|lower (?:your )?shield|choose your weapons|automatic combat)$")) return new Command { action = "combat_auto" };
             var focus = Regex.Match(s, @"^(?:focus on|target|attack) (?:the |a )?(?<enemy>[a-z][a-z ]{0,40})$");
             if (focus.Success) return new Command { action = "focus_enemy", item = focus.Groups["enemy"].Value };

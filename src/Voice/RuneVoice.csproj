@@ -1,5 +1,5 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup><Version>0.4.29</Version><ApplicationIcon>Assets\rune.ico</ApplicationIcon><OutputType>WinExe</OutputType><TargetFramework>net8.0-windows</TargetFramework><UseWindowsForms>true</UseWindowsForms><UseWPF>true</UseWPF><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable><AssemblyName>RuneVoice</AssemblyName><ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode></PropertyGroup>
+  <PropertyGroup><Version>0.4.41</Version><ApplicationIcon>Assets\rune.ico</ApplicationIcon><OutputType>WinExe</OutputType><TargetFramework>net8.0-windows</TargetFramework><UseWindowsForms>true</UseWindowsForms><UseWPF>true</UseWPF><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable><AssemblyName>RuneVoice</AssemblyName><ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode></PropertyGroup>
   <ItemGroup><PackageReference Include="System.Speech" Version="8.0.0"/><Compile Include="..\Shared\Protocol.cs" Link="Protocol.cs"/></ItemGroup>
   <ItemGroup><Content Include="Assets\*.png;Assets\*.ico;Assets\*.ps1"><CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory><CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory></Content></ItemGroup>
 </Project>

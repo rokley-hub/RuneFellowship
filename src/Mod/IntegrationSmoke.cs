@@ -48,6 +48,7 @@ namespace Rune.Mod
             Vector3 center = player.transform.position;
             Heightmap.GetHeight(center, out float ground); center.y = ground + 1;
             player.transform.position = center;
+            if (Environment.GetEnvironmentVariable("RUNE_COMBAT_XP_SMOKE") == "1") { yield return CombatExperienceSmoke.Run(player,output); Application.Quit(); yield break; }
             if (Environment.GetEnvironmentVariable("RUNE_ROSTER_SMOKE") == "1") { yield return RosterSmoke.Run(plugin,player,output); yield break; }
             if (Environment.GetEnvironmentVariable("RUNE_RELIABILITY_SMOKE") == "1") {
                 yield return ReliabilitySmoke.Run(plugin, player, output + ".reliability.txt");

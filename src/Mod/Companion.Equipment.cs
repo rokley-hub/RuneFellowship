@@ -24,7 +24,7 @@ namespace Rune.Mod
             item.m_customData.Remove("rune.kept"); item.m_customData.Remove("rune.personal");
             if (!IsPersonalEquipment(item)) { item.m_customData["rune.kept"] = "1"; return "Kept in my inventory for later. Say return to receive it."; }
             item.m_customData["rune.personal"] = "1";
-            if (Appearance == "wolf") return "Kept, but this body cannot equip it.";
+            if (Rune.Shared.Rules.IsWolf(Appearance)) return "Kept, but this body cannot equip it.";
             var current = Body.GetInventory().GetAllItems().Where(i => i != item && i.m_equipped && i.m_shared.m_itemType == item.m_shared.m_itemType).FirstOrDefault();
             float Score(ItemDrop.ItemData i) => i.m_shared.m_useDurability && i.m_durability <= 0 ? -1 : IsArmour(i) ? i.GetArmor() : i.GetDamage().GetTotalDamage() + i.m_shared.m_toolTier * 10;
             if (current == null || Score(item) > Score(current) || Score(item) == Score(current) && current.m_shared.m_useDurability && current.GetDurabilityPercentage() < item.GetDurabilityPercentage()) {
@@ -61,7 +61,7 @@ namespace Rune.Mod
         private bool TickEquipmentCare(float dt)
         {
             if (Time.time >= supplyCheckAt) { supplyCheckAt = Time.time + 5; RefreshSupplies(); }
-            if (Appearance == "wolf" || followingOrder || mode == "stay" || mode == "return" || Body.InAttack()) { CancelMaintenance(); return false; }
+            if (Rune.Shared.Rules.IsWolf(Appearance) || followingOrder || mode == "stay" || mode == "return" || Body.InAttack()) { CancelMaintenance(); return false; }
             if (repairItem == null) {
                 if (Time.time < equipmentCheckAt) return false;
                 equipmentCheckAt = Time.time + 5;

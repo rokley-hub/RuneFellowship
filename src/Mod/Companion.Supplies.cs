@@ -17,7 +17,7 @@ namespace Rune.Mod
         {
             var items = Body.GetInventory().GetAllItems();
             var keep = new HashSet<ItemDrop.ItemData>();
-            if (Appearance != "wolf") {
+            if (!Rune.Shared.Rules.IsWolf(Appearance)) {
                 var own = items.Where(i => IsOwnedItem(i) && !i.m_customData.ContainsKey("rune.loan")).ToArray();
                 foreach (bool pick in new[] { false, true }) {
                     var tool = own.Where(i => IsPersonalEquipment(i) && (pick ? i.GetDamage().m_pickaxe : i.GetDamage().m_chop) > 0)
@@ -28,6 +28,10 @@ namespace Rune.Mod
                 foreach (string type in own.Where(i => IsPersonalEquipment(i) && (i.m_equipped || i.m_customData.ContainsKey("rune.personal")) && !string.IsNullOrEmpty(i.m_shared.m_ammoType)).Select(i => i.m_shared.m_ammoType).Distinct()) {
                     var ammo = Body.GetInventory().GetAmmoItem(type, null);
                     if (ammo != null && own.Contains(ammo)) keep.Add(ammo);
+                }
+                {
+                    foreach (var food in own.Where(i => i.m_shared.m_food > 0 && i.m_shared.m_foodBurnTime > 0)
+                        .OrderByDescending(i => FoodScore(i, false)).GroupBy(i => i.m_shared.m_name).Take(3).Select(g => g.First())) keep.Add(food);
                 }
             }
             bool changed = false;

@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <Version>0.3.16</Version>
+    <Version>0.3.26</Version>
     <TargetFramework>netstandard2.1</TargetFramework>
     <LangVersion>latest</LangVersion>
     <AssemblyName>RuneCompanion</AssemblyName>
@@ -11,11 +11,19 @@
     <Error Condition="!Exists('$(ValheimDir)\valheim_Data\Managed\assembly_valheim.dll')" Text="Set ValheimDir (or VALHEIM_DIR) to your licensed Valheim installation. Game assemblies are not included." />
   </Target>
   <ItemGroup>
+    <Compile Include="..\Direwolf\DirewolfSkin.cs" Link="DirewolfSkin.cs" />
+    <Compile Include="..\Direwolf\DirewolfSetup.cs" Link="DirewolfSetup.cs" />
+    <Compile Include="..\Direwolf\MountRules.cs" Link="MountRules.cs" />
+    <EmbeddedResource Include="..\..\assets\Direwolf\direwolf.skin" LogicalName="RuneDirewolf.skin" />
+    <EmbeddedResource Include="..\..\assets\Direwolf\direwolf-albedo.png" LogicalName="RuneDirewolf.albedo" />
+    <EmbeddedResource Include="..\..\assets\Direwolf\direwolf-mount-icon.png" LogicalName="RuneDirewolf.mountIcon" />
     <Compile Include="..\Shared\Protocol.cs" Link="Protocol.cs" />
     <Compile Include="..\Shared\CombatPolicy.cs" Link="CombatPolicy.cs" />
+    <Compile Include="..\Shared\CombatExperience.cs" Link="CombatExperience.cs" />
+    <Compile Include="..\Shared\CombatWeaponScore.cs" Link="CombatWeaponScore.cs" />
     <Reference Include="$(ValheimDir)\valheim_Data\Managed\*.dll" Exclude="$(ValheimDir)\valheim_Data\Managed\System*.dll;$(ValheimDir)\valheim_Data\Managed\mscorlib.dll;$(ValheimDir)\valheim_Data\Managed\netstandard.dll;$(ValheimDir)\valheim_Data\Managed\Mono*.dll"><Private>false</Private></Reference>
     <Reference Include="BepInEx"><HintPath>$(DependencyDir)BepInExPack\BepInExPack_Valheim\BepInEx\core\BepInEx.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="0Harmony"><HintPath>$(DependencyDir)BepInExPack\BepInExPack_Valheim\BepInEx\core\0Harmony.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="Jotunn"><HintPath>$(DependencyDir)Jotunn\plugins\Jotunn.dll</HintPath><Private>false</Private></Reference>
-  </ItemGroup>
+  <Compile Include="..\Shared\CombatTactics.cs" Link="CombatTactics.cs" /><Compile Include="..\Shared\RangedResources.cs" Link="RangedResources.cs" /></ItemGroup>
 </Project>

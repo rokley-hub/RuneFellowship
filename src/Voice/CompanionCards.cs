@@ -63,5 +63,5 @@ public sealed partial class RuneWindow
         }
     }
 
-    private static string FriendlyAppearance(string skin) => skin switch { "elite" => "Elite draugr", "draugr" => "Draugr", "dwarf" => "Dwarf", "wolf" => "Wolf", _ => "Skeleton" };
+    private static string FriendlyAppearance(string skin) => skin switch { "elite" => "Elite draugr", "draugr" => "Draugr", "dwarf" => "Dwarf", "direwolf" => "Direwolf", "wolf" => "Wolf", _ => "Skeleton" };
 }

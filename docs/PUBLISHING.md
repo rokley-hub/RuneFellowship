@@ -1,6 +1,6 @@
 # Publishing Rune Fellowship
 
-Desktop 0.4.29 is paired with gameplay plugin 0.3.16. A prepared archive is not proof of publication. Check the publication record before describing a version as available.
+Desktop 0.4.41 is paired with gameplay plugin 0.3.26. A prepared archive is not proof of publication. Check the publication record before describing a version as available.
 
 ## Release checklist
 

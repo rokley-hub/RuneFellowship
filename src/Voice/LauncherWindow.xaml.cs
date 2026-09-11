@@ -25,8 +25,8 @@ public partial class LauncherWindow : Window
     private readonly RuneWindow runtime;
     private readonly DispatcherTimer refreshTimer = new() { Interval = TimeSpan.FromMilliseconds(650) };
     private readonly HttpClient health = new() { Timeout = TimeSpan.FromSeconds(1.5) };
-    private readonly string[] appearanceIds = { "skeleton", "draugr", "elite", "dwarf", "wolf" };
-    private readonly string[] appearanceLabels = { "Skeleton", "Draugr", "Elite draugr", "Dwarf · player gear", "Wolf" };
+    private readonly string[] appearanceIds = { "skeleton", "draugr", "elite", "dwarf", "wolf", "direwolf" };
+    private readonly string[] appearanceLabels = { "Skeleton", "Draugr", "Elite draugr", "Dwarf · player gear", "Wolf", "Direwolf · mount" };
     private string[] voiceIds = VoiceCatalog.VoiceIds;
     private string displayedVoiceEngine = "kokoro";
     private readonly Dictionary<string, string> draftVoiceChoices = new();
@@ -321,7 +321,7 @@ public partial class LauncherWindow : Window
         if (selectedProfile == null) return;
         var draft = DraftProfile(); CompanionPortrait.Source = PortraitSource(draft); PortraitTitle.Text = draft.Name;
         PortraitDescription.Text = draft.Appearance switch {
-            "wolf" => "Fast animal companion. Can fight and collect loose items, but cannot wear armour or use tools.",
+            "direwolf" => "Saddled direwolf companion with running and bite animations. Interact with its saddle to ride; use Attack to bite. Cannot wear armour or use tools. Riding is awaiting in-game validation.", "wolf" => "Fast animal companion. Can fight and collect loose items, but cannot wear armour or use tools.",
             "dwarf" => (IsMaleVoice(draft) ? "Male" : "Female") + " player-style dwarf. Can wear armour and use weapons and tools.",
             "skeleton" => "Undead humanoid with native movement and weapons. Can use tools, craft, cook, and manage storage.",
             "draugr" => "Durable undead worker with native movement and weapons. Can use tools and manage your base.",
@@ -355,11 +355,11 @@ public partial class LauncherWindow : Window
         draftVoiceChoices[engine] = choice;
         loadingProfile = wasLoading;
     }
-    private static string FriendlyAppearance(string id) => id switch { "elite" => "Elite draugr", "draugr" => "Draugr", "dwarf" => "Dwarf", "wolf" => "Wolf", _ => "Skeleton" };
+    private static string FriendlyAppearance(string id) => id switch { "elite" => "Elite draugr", "draugr" => "Draugr", "dwarf" => "Dwarf", "direwolf" => "Direwolf", "wolf" => "Wolf", _ => "Skeleton" };
 
     private void UpdateProfileCapabilities()
     {
-        bool wolf = AppearanceCombo.SelectedIndex == Array.IndexOf(appearanceIds, "wolf");
+        bool wolf = AppearanceCombo.SelectedIndex >= 0 && Rules.IsWolf(appearanceIds[AppearanceCombo.SelectedIndex]);
         PermissionsPanel.Visibility = wolf ? Visibility.Collapsed : Visibility.Visible;
         if (wolf) { StoredMaterialsCheck.IsChecked = false; CraftBuildCheck.IsChecked = false; CookSortCheck.IsChecked = false; }
         string[] roles = wolf ? new[] { "Scout & Gatherer", "Guard & Explorer", "Balanced companion" } : new[] { "Builder & Gatherer", "Scout & Gatherer", "Guard & Explorer", "Quartermaster & Cook", "Balanced companion" };

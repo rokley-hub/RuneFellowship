@@ -63,7 +63,7 @@ public sealed partial class RuneWindow
         draft.RecognitionName = draft.RecognitionName.Trim();
         draft.Personality = draft.Personality.Trim();
         draft.Traits = Array.Empty<string>();
-        if (draft.Appearance == "wolf") { draft.UseStoredMaterials = false; draft.CraftAndBuild = false; draft.CookAndSort = false; }
+        if (Rune.Shared.Rules.IsWolf(draft.Appearance)) { draft.UseStoredMaterials = false; draft.CraftAndBuild = false; draft.CookAndSort = false; }
         preferences.Profiles[index] = draft.Copy();
         SelectCompanion(draft.Id);
         SavePreferences();

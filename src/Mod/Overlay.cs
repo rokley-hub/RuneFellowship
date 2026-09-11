@@ -21,7 +21,7 @@ namespace Rune.Mod
         private bool overlayPositionDirty;
         private void InitializeOverlayPosition()
         {
-            trackCompanionTeam = Config.Bind("Interface", "TrackCompanionTeam", true, "Show owned companion map pins and direction/distance in the fellowship overlay. Rune app tracking preference overrides while connected.");
+            trackCompanionTeam = Config.Bind("Interface", "TrackCompanionTeam", true, "Show owned companion map pins. Rune app tracking preference overrides while connected.");
             trackedCompanionIds = Config.Bind("Interface", "TrackedCompanionIds", "*", "Companion IDs shown on the map. Managed from each companion's Show on map toggle in Rune; * shows all until configured.");
             overlayWidth = Config.Bind("Interface", "OverlayWidth", 480f, "Overlay width in pixels; status text wraps and height grows with content.");
             overlayX = Config.Bind("Interface", "OverlayX", -1f, "Horizontal overlay position, 0 to 1; -1 uses the default.");
@@ -87,7 +87,7 @@ namespace Rune.Mod
         {
             GUI.Box(rect, GUIContent.none, overlayPanel);
             GUI.Label(new Rect(rect.x + 16, rect.y + 11, 185, 22), "F E L L O W S H I P", overlayTitle);
-            GUI.Label(new Rect(rect.xMax - 126, rect.y + 12, 110, 22), show ? "Drag to move" : overlay.controlsKey + " controls", overlayMuted);
+            GUI.Label(new Rect(rect.xMax - 126, rect.y + 12, 110, 22), show ? "Drag to move" : overlay.controlsKey + " overview", overlayMuted);
             float textWidth = rect.width - 50;
             float contentHeight = OverlayContentHeight(companions, textWidth), viewportHeight = Mathf.Max(40, rect.height - (show ? 132 : 96));
             overlayScroll.y = Mathf.Clamp(overlayScroll.y, 0, Mathf.Max(0, contentHeight - viewportHeight));
@@ -154,7 +154,6 @@ namespace Rune.Mod
         private string[] StatusLines(Companion companion)
         {
             var lines = new System.Collections.Generic.List<string>();
-            if (IsCompanionTracked(companion.Id)) lines.Add("TEAM · " + CompanionLocation(companion));
             lines.Add(companion.EquippedWeaponStatus);
             if (companion.ObjectiveOngoing) lines.Add("GOAL · " + companion.Objective);
             lines.Add("NOW · " + companion.TaskLabel);

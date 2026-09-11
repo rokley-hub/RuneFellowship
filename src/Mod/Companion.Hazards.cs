@@ -21,8 +21,7 @@ namespace Rune.Mod
             if (arrival < 0 || arrival > .9f || (relative - velocity * arrival).sqrMagnitude > 2.25f) return false;
             Vector3 side = Vector3.Cross(Vector3.up, velocity).normalized * 3;
             var escape = transform.position + side;
-            if (!SafeGround(escape)) escape = transform.position - side;
-            if (!SafeGround(escape)) return false;
+            if (!TacticalRoute(escape, out escape) && !TacticalRoute(transform.position - side, out escape)) return false;
             hazardDestination = escape; hazardUntil = Time.time + .7f; hazardReason = "Sidestepping an incoming projectile"; return true;
         }
         private bool AvoidMovingHazards(float dt)
@@ -47,12 +46,11 @@ namespace Rune.Mod
                     if (away.sqrMagnitude < 1) away = Vector3.Cross(Vector3.up, collider.transform.up);
                     if (away.sqrMagnitude < .1f) away = transform.right;
                     var destination = transform.position + away.normalized * 5;
-                    if (!SafeGround(destination)) destination = transform.position - away.normalized * 5;
-                    if (SafeGround(destination)) { hazardDestination = destination; hazardUntil = Time.time + 1.3f; hazardReason = "Moving clear of a falling tree or rolling log"; break; }
+                    if (TacticalRoute(destination, out destination) || TacticalRoute(transform.position - away.normalized * 5, out destination)) { hazardDestination = destination; hazardUntil = Time.time + 1.3f; hazardReason = "Moving clear of a falling tree or rolling log"; break; }
                 }
             }
             if (Time.time >= hazardUntil) return false;
-            SetGuard(false); SetCombatTarget(null); ai.SetFollowTarget(null);
+            CancelBowDraw(); SetGuard(false); SetCombatTarget(null); ai.SetFollowTarget(null);
             safetyNote = hazardReason;
             Move(dt, hazardDestination, .6f); lastProgress = Time.time;
             return true;

@@ -1,6 +1,44 @@
 using Rune.Shared;
 
+CombatExperienceChecks.Run();
+
 int checks = 0;
+Check(Rune.Direwolf.MountRules.CanJump(true, true, false, false, 150, 0), "Grounded rider can jump with stamina");
+Check(!Rune.Direwolf.MountRules.CanJump(false, true, false, false, 150, 0), "Non-rider cannot jump the mount");
+Check(!Rune.Direwolf.MountRules.CanJump(true, false, false, false, 150, 0), "No repeated airborne jump");
+Check(!Rune.Direwolf.MountRules.CanJump(true, true, true, false, 150, 0), "No mounted jump from swimming");
+Check(!Rune.Direwolf.MountRules.CanJump(true, true, false, true, 150, 0), "Attack/stagger/encumbrance blocks jump");
+Check(!Rune.Direwolf.MountRules.CanJump(true, true, false, false, 10, 0), "Exhausted saddle blocks jump");
+Check(!Rune.Direwolf.MountRules.CanJump(true, true, false, false, 150, .2f), "Jump cooldown blocks repeat input");
+Check(Rune.Direwolf.MountRules.ShouldStop(0, false), "Releasing mounted movement stops");
+// Contract reproduced from the installed Sadle.RPC_Controls: Turn is ignored at Walk/Run.
+{
+    int NativeRpcSpeed(int current, int request) => request==4 ? (current==3 ? 0 : current) : request==3 && (current==1 || current==2) ? current : request;
+    int NativeInputSpeed(float z) => z>.5f ? 1 : z<-.5f ? 0 : 4;
+    Check(NativeRpcSpeed(1,3)==1 && NativeRpcSpeed(2,3)==2, "Native Turn reproduces the old failure to stop a moving mount");
+    foreach(int speed in new[]{0,1,2,3})
+        Check(NativeRpcSpeed(speed,NativeInputSpeed(Rune.Direwolf.MountRules.StopInput))==0,"Explicit stop is accepted from native saddle speed "+speed);
+}
+Check(Rune.Direwolf.MountRules.ShouldStop(.25f, false), "Stick input below native movement threshold stops");
+Check(Rune.Direwolf.MountRules.ShouldStop(-1, false), "Backward mounted input brakes");
+Check(!Rune.Direwolf.MountRules.ShouldStop(1, false), "Forward mounted input moves");
+Check(Rune.Direwolf.MountRules.ShouldStop(1, true), "Block brakes even with forward input");
+Check(Rune.Direwolf.MountRules.NextAutoRun(false, true, false, false), "Explicit auto-run enables continuous movement");
+Check(Rune.Direwolf.MountRules.NextAutoRun(true, false, false, false), "Auto-run continues after toggle is released");
+Check(!Rune.Direwolf.MountRules.NextAutoRun(true, true, false, false), "Second auto-run press stops");
+Check(!Rune.Direwolf.MountRules.NextAutoRun(true, false, true, false), "Manual steering cancels auto-run");
+Check(!Rune.Direwolf.MountRules.NextAutoRun(true, false, false, true), "Braking cancels auto-run");
+Check(Rules.Appearances.Contains("direwolf"), "Direwolf is an available body");
+Check(Rules.IsWolf("direwolf") && Rules.IsWolf("wolf") && !Rules.IsWolf("dwarf"), "Both wolf bodies keep animal capability limits");
+foreach (var action in new[] { "summon", "update_profile", "dismiss" }) {
+    Check(!Rules.CanChangeRiddenBody(action, true, "direwolf", "dwarf"), "Occupied mount cannot be replaced or dismissed: " + action);
+    Check(Rules.CanChangeRiddenBody(action, false, "direwolf", "dwarf"), "Dismounted companion can change: " + action);
+}
+Check(Rules.CanChangeRiddenBody("update_profile", true, "direwolf", "direwolf"), "Ridden profile may update its name without replacing the body");
+var direwolfCommand = new Command { id = Guid.NewGuid().ToString(), world = "direwolf-test", timestamp = Rules.Now, action = "summon", appearance = "direwolf", companionId = "rune", displayName = "Rune", gender = "male", combatStyle = "Balanced", amount = 1 };
+Check(Rules.Validate(direwolfCommand, "direwolf-test", Rules.Now) == "", "Direwolf summon accepted through the actual command protocol");
+direwolfCommand.appearance = "unknown-wolf";
+Check(Rules.Validate(direwolfCommand, "direwolf-test", Rules.Now) != "", "Unknown body remains rejected");
 Check(Rules.Capabilities.Select(c => c.action).Distinct().Count() == Rules.Capabilities.Length, "Capability actions are unique");
 Check(Rules.Actions.SequenceEqual(Rules.Capabilities.Select(c => c.action)), "Action validation comes from capability catalog");
 Check(Rules.PlanActions.SequenceEqual(Rules.Capabilities.Where(c => c.plan).Select(c => c.action)), "Plan validation comes from capability catalog");
@@ -173,3 +211,7 @@ Console.WriteLine($"Passed {checks} command and protocol checks.");
 RecorderChecks.Run();
 
 CombatPolicyChecks.Run();
+
+CombatTacticsChecks.Run();
+
+RangedResourceChecks.Run();

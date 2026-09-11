@@ -33,7 +33,7 @@ namespace Rune.Mod
         private string StartCraftPlan(string action, string item)
         {
             if (IsWorkbench(item) && action != "gather_recipe") return StartConstruction(action, item);
-            if (Appearance == "wolf") return RejectCraft("A wolf can fetch loose items and fight, but cannot craft or build a workbench or boat.");
+            if (Rune.Shared.Rules.IsWolf(Appearance)) return RejectCraft("A wolf can fetch loose items and fight, but cannot craft or build a workbench or boat.");
             bool workbench = IsWorkbench(item);
             string boatName = Normalize(item) == "boat" || Normalize(item) == "karve" ? "Karve" : Normalize(item) == "raft" ? "Raft" : Normalize(item) == "longship" ? "VikingShip" : "";
             var boat = workbench ? PrefabManager.Instance.GetPrefab("piece_workbench") : boatName.Length > 0 ? PrefabManager.Instance.GetPrefab(boatName) : null;
