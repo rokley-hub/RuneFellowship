@@ -1,4 +1,5 @@
 using Rune.Shared;
+LocalCompanionChecks.Run();
 
 CombatExperienceChecks.Run();
 

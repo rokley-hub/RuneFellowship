@@ -1,5 +1,8 @@
 # Rune Fellowship
 
+> **Standalone plugin 0.4.43 candidate:** The new F6 menu supplies basic companion setup, summoning and orders without the desktop app. F8 remains the companion overview. This candidate contains no desktop installer. Builds and deterministic checks pass; fresh-install in-game validation and Thunderstore moderator review are still pending. The existing desktop release remains 0.4.41 beta. See [the candidate listing and setup instructions](docs/THUNDERSTORE-LISTING.md).
+
+
 ![Rune Fellowship: Viking, dwarf and direwolf](docs/images/rune-fellowship-cover.png)
 
 An unofficial Windows app and Valheim companion mod with local speech, natural-language orders, companion profiles, mod management and an in-game task overview.

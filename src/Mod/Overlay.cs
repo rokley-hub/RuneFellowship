@@ -95,7 +95,7 @@ namespace Rune.Mod
             if (show) overlayScroll = GUI.BeginScrollView(viewport, overlayScroll, new Rect(0, 0, rect.width - 18, contentHeight));
             else { GUI.BeginGroup(viewport); GUI.BeginGroup(new Rect(0, -overlayScroll.y, rect.width - 18, contentHeight)); }
             float row = 0;
-            if (companions.Length == 0) GUI.Label(new Rect(16, row, textWidth, 35), "Summon a companion in Rune Voice.", overlayMuted);
+            if (companions.Length == 0) GUI.Label(new Rect(16, row, textWidth, 35), "Press " + localControlsKey.Value + " to summon a companion.", overlayMuted);
             foreach (var companion in companions) {
                 string name = companion.DisplayName;
                 GUI.Label(new Rect(16, row, textWidth - 80, 22), (companion.Id == overlay.companion ? "• " : "") + name, overlayText);

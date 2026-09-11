@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <Version>0.3.26</Version>
+    <Version>0.3.27</Version>
     <TargetFramework>netstandard2.1</TargetFramework>
     <LangVersion>latest</LangVersion>
     <AssemblyName>RuneCompanion</AssemblyName>
@@ -18,6 +18,7 @@
     <EmbeddedResource Include="..\..\assets\Direwolf\direwolf-albedo.png" LogicalName="RuneDirewolf.albedo" />
     <EmbeddedResource Include="..\..\assets\Direwolf\direwolf-mount-icon.png" LogicalName="RuneDirewolf.mountIcon" />
     <Compile Include="..\Shared\Protocol.cs" Link="Protocol.cs" />
+    <Compile Include="..\Shared\LocalCompanions.cs" Link="LocalCompanions.cs" />
     <Compile Include="..\Shared\CombatPolicy.cs" Link="CombatPolicy.cs" />
     <Compile Include="..\Shared\CombatExperience.cs" Link="CombatExperience.cs" />
     <Compile Include="..\Shared\CombatWeaponScore.cs" Link="CombatWeaponScore.cs" />

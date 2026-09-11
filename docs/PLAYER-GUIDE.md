@@ -2,11 +2,17 @@
 
 **Desktop 0.4.41 beta / game plugin 0.3.26 / Thunderstore package 0.4.41.** Rune is an unofficial Windows companion app for your own licensed Steam copy of Valheim.
 
-## Install or update
+## Standalone plugin candidate 0.4.43 (not yet published)
 
-Download [the Windows installer from GitHub](https://github.com/rokley-hub/RuneFellowship/releases/tag/v0.4.41-beta), extract the entire ZIP and open **Install Rune.exe**. Alternatively, download the [Thunderstore package](https://thunderstore.io/c/valheim/p/RuneFellowship/RuneFellowship/), extract it, then extract **Rune Installer.zip** and run its installer. Keep the extracted files together. Setup downloads selected runtimes and speech/model components from their original publishers.
+Plugin 0.3.27 adds F6 companion setup and basic orders without the desktop app. Install BepInEx, Jotunn and the plugin in an isolated modded profile, enter a solo test world and press F6. Choose one of three slots, name/appearance and Summon. Follow, Stay, Defend, gathering, tool lending, return and unsummoning use the same native executor. F8 remains the information overview. The desktop app is optional for voice, AI dialogue and its advanced workflow. The in-game slots are separate from desktop profiles.
 
-**Install with App** installs the game integration in an external mod manager. It does not run the Rune desktop installer. Rune's desktop app is required for companion configuration and dialogue.
+Build and deterministic checks passed, but the fresh-install menu and gameplay still require native validation. Thunderstore's permission is conditional on useful standalone functionality; the candidate is not yet approved or uploaded.
+
+## Optional desktop installation or update
+
+Download [the Windows installer from GitHub](https://github.com/rokley-hub/RuneFellowship/releases/tag/v0.4.41-beta), extract the entire ZIP and open **Install Rune.exe**. The desktop online installer is not permitted on Thunderstore. Its reported antivirus detections remain unresolved; do not disable protection or bypass quarantine to install it. Keep the extracted files together. Setup downloads selected runtimes and speech/model components from their original publishers.
+
+**Install with App** installs the game integration in an external mod manager. It does not run the Rune desktop installer. The desktop app is needed for voice and AI dialogue; the standalone candidate adds basic in-game configuration and orders.
 
 Existing users on 0.4.27 or newer can use **Settings → Updates & support → Check for updates**. Close Valheim before applying an update. Earlier users need the full installer once. Choose your existing Rune installation to retain preferences, companions and models. Keep the update backup until the new version works. Updating an external mod-manager profile does not update the desktop automatically.
 

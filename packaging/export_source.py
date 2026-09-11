@@ -13,7 +13,7 @@ def main():
  for folder in ['src','tests','audio','blueprint-library']:
   for p in (project/folder).rglob('*'):
    rel=p.relative_to(project)
-   if rel.as_posix() in {'src/Direwolf/TEST-NOTES.md','src/Direwolf/DEVELOPMENT-BACKLOG.md'}:continue
+   if rel.as_posix() in {'src/Direwolf/TEST-NOTES.md','src/Direwolf/DEVELOPMENT-BACKLOG.md','src/Mod/TEST-NOTES.md','src/Mod/DEVELOPMENT-BACKLOG.md'}:continue
    if not p.is_file() or excluded.intersection(rel.parts) or p.suffix.lower() not in allowed:continue
    if p.is_symlink() or not p.resolve().is_relative_to(project):raise RuntimeError('Source path escapes project')
    entries.append((p,rel))

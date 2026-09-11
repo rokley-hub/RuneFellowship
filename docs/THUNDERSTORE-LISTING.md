@@ -2,13 +2,20 @@
 
 ![Rune Fellowship promotional banner](https://raw.githubusercontent.com/rokley-hub/RuneFellowship/main/docs/images/rune-fellowship-cover.png)
 
-**Thunderstore package 0.4.42 | Windows desktop 0.4.41 beta | game plugin 0.3.26**
+**Package 0.4.43 | game plugin 0.3.27 | optional desktop 0.4.41 beta**
 
-Package 0.4.42 restores the app screenshots and adds the direwolf animation preview. It includes the same installer and game plugin as 0.4.41.
+Basic companions work entirely in the game: press **F6** to name and summon a companion, then use Follow, Stay, Defend, gathering and return controls. This package contains the game plugin, icon and documentation. The Rune desktop app and online installer are not included.
 
-Build a fellowship of companions in Valheim. Speak or type supported orders, choose their personality and voice, and follow their work in the game. Local speech, optional local or ChatGPT dialogue, mod profiles and the companion desktop app are included in Rune's workflow.
+Build a fellowship of companions in Valheim. Use the in-game controls for basic companions, combat and a rideable direwolf. The separate desktop app adds voice, AI dialogue, its own companion profiles and advanced orders; it is optional for basic gameplay.
 
-## New in this release
+## New in package 0.4.43
+
+- Added an in-game F6 menu with three saved companion slots, names and six appearances. No desktop setup is needed.
+- Added direct Follow, Stay, Defend, Gather 20 wood/stone, Lend tools, Return and Unsummon controls.
+- Kept F8 as the information overview, with a button opening the separate controls.
+- Removed the desktop online installer from the archive.
+
+## Companion features
 
 - Custom saddled direwolf with native wolf movement/combat, riding, jumping and biting.
 - Corrected body rendering and saddle tracking, fuller chest/tucked belly, visible reins and mounted stopping logic.
@@ -45,28 +52,35 @@ Choose Local, Hybrid or ChatGPT for conversation and commands. Speech recognitio
 
 Browse supported intentions, examples and their requirements. Available actions depend on the companion's body, equipment and surroundings.
 
-## Install the desktop app
+## Install and start without the desktop app
 
-1. Choose **Download** and extract the package ZIP.
-2. Extract the included **Rune Installer.zip**.
-3. Open **Install Rune.exe** and choose an installation folder and optional components.
-4. Open Steam, then Rune; configure a profile, companion and voice, and use **Start modded**.
+1. Install this package in a Valheim mod-manager profile. BepInEx and Jotunn are required and declared as dependencies. For manual installation, install those dependencies and copy the supplied `BepInEx/plugins/RuneFellowship/RuneCompanion.dll` into the matching folder of your intended profile.
+2. Open Steam and launch that modded profile into a **solo world** with a living character. Try a separate test world first.
+3. Press **F6** (also shown in the empty fellowship overlay). Select one of the three slots, choose a name and appearance, and select **Summon**. The default choices include Rune, Odin the direwolf and Eira.
+4. Use the menu to Follow, Stay, Defend, gather 20 wood or stone, return cargo, or unsummon. Humanoids can borrow tools. Resource gathering still requires reachable resources and appropriate tools; wolves cannot use tools or armour.
+5. Press **F8** for health, food, stamina, equipment, inventory and current activity. F7 toggles the overlay. F6 controls can be rebound in the plugin configuration.
 
-The included installer is the complete Windows online installer. Selected runtimes and models download from their original publishers. **Install with App** installs the game integration through an external mod manager; it does not run the desktop installer. Rune needs your own licensed Valheim installation and does not bundle the game or other authors' mods.
+Companion identities and world state persist. Names and appearances for the three in-game slots are saved in the plugin configuration after a successful summon. To change a summoned local companion's body, first return cargo and borrowed equipment, then unsummon it and change the selection. A companion saved farther away is not duplicated or teleported: Summon reports its saved position. Unsummoning an occupied mount or a companion carrying cargo/borrowed gear is refused.
 
-Existing users on 0.4.27 or later: **Settings → Updates & support → Check for updates**. Close Valheim before updating. Earlier users can run the full installer into their existing Rune folder. Keep app and game plugin current together.
+Existing app-created companions nearby also appear in F6 and can receive basic orders without resetting their identity or work permissions. In-game slots and desktop companion profiles are separate; there is no automatic profile import between them. Rune-managed profiles already supply a plugin: avoid duplicate DLL copies or letting a desktop update overwrite your chosen plugin version. This plugin retains desktop 0.4.41's command protocol, but the app is not necessary for the F6 workflow.
+
+## Optional voice and AI dialogue
+
+The separate Rune desktop app supplies speech, AI dialogue and its own advanced command workflow. [Source and separate desktop releases](https://github.com/rokley-hub/RuneFellowship) are on GitHub. No installer, desktop application, speech runtime or model is bundled in this Thunderstore package.
+
+Thunderstore declined the desktop online installer because it could not audit all downloaded components and antivirus vendors flagged it. Those antivirus findings remain unresolved; this plugin packaging change is not a security clearance for the installer. Do not bypass quarantine or disable protection to install it.
 
 ## Riding and companion information
 
-Create a **Direwolf** companion in Rune, save and summon it. Interact with its fixed saddle to ride. Movement and Run use Valheim controls; releasing forward movement stops it unless auto-run is active. Backward movement or Block brakes. Jump uses mount stamina; primary Attack starts a wolf bite. Secondary attack or dodge dismounts. Hunger slows mount-stamina regeneration.
+In **F6**, choose a free in-game slot, select **Direwolf**, then **Summon**. Interact with its fixed saddle to ride. Movement and Run use Valheim controls; releasing forward movement stops it unless auto-run is active. Backward movement or Block brakes. Jump uses mount stamina; primary Attack starts a wolf bite. Secondary attack or dodge dismounts. Hunger slows mount-stamina regeneration.
 
-F7 toggles the compact fellowship overlay. F8 opens companion information and unlocks dragging the overlay header. Appearance and orders are managed through the desktop app. Body capabilities, food, stamina, equipment, tools and resources limit what companions can do.
+F7 toggles the compact fellowship overlay. F8 opens companion information and unlocks dragging the overlay header. Basic setup and orders are available in the separate F6 menu; the desktop app is optional. Body capabilities, food, stamina, equipment, tools and resources limit what companions can do.
 
 [Detailed player guide and troubleshooting](https://thunderstore.io/c/valheim/p/RuneFellowship/RuneFellowship/wiki/5843-getting-started-and-player-guide/) | [GitHub source and releases](https://github.com/rokley-hub/RuneFellowship) | [Report an issue](https://github.com/rokley-hub/RuneFellowship/issues)
 
 ## Beta status
 
-Release builds, deterministic companion-policy checks, updater tests and installer/package checks passed. The mount has been loaded and ridden in live screenshots; the latest stop/seat/rein corrections still need wider live field testing. Multiplayer, a second PC and all hardware are not verified. Blueprint construction remains an unverified compatibility area; disable incompatible integrations if they cause spawning failures. This beta is unsigned.
+The plugin build, 72 new standalone command checks and existing deterministic suites passed. The new F6 menu still needs a fresh-install in-game check without the desktop app; these checks do not establish native UI or gameplay success. The mount has been loaded and ridden in live screenshots; the latest stop/seat/rein corrections still need wider live field testing. Multiplayer, a second PC and all hardware are not verified. Blueprint construction remains an unverified compatibility area; disable incompatible integrations if they cause spawning failures. This beta is unsigned.
 
 Speech stays local. Optional cloud dialogue sends relevant conversation/game context to the chosen provider using your own connection. Review reports before sharing. AI tools were used in code, model and artwork creation; generated portraits and cover art are illustrations, not gameplay screenshots.
 

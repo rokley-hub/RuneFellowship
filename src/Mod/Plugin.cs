@@ -45,6 +45,7 @@ namespace Rune.Mod
         {
             Instance = this;
             InitializeOverlayPosition();
+            InitializeLocalControls();
             BridgePath = Config.Bind("General", "BridgeFolder", Path.Combine(BepInEx.Paths.ConfigPath, "RuneBridge"), "Folder shared with Rune Voice.").Value;
             if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("RUNE_INTEGRATION_SMOKE"))) BridgePath = Path.Combine(Path.GetDirectoryName(Environment.GetEnvironmentVariable("RUNE_INTEGRATION_SMOKE")), "isolated-test-bridge");
             Directory.CreateDirectory(BridgePath);
@@ -111,8 +112,9 @@ namespace Rune.Mod
         private void Update()
         {
             PollOverlayState();
+            UpdateLocalControls();
             if (Player.m_localPlayer && OverlayKeyDown(overlay.overlayKey)) overlayVisible = !overlayVisible;
-            if (Player.m_localPlayer && OverlayKeyDown(overlay.controlsKey)) { show = !show; if (!show) SaveOverlayPosition(); GUIManager.BlockInput(show); }
+            if (Player.m_localPlayer && OverlayKeyDown(overlay.controlsKey)) { localControlsVisible = false; show = !show; if (!show) SaveOverlayPosition(); GUIManager.BlockInput(show); }
             if (!Player.m_localPlayer && show) { show = false; GUIManager.BlockInput(false); }
             if (Time.unscaledTime < pollAt) return;
             pollAt = Time.unscaledTime + .3f;
@@ -235,6 +237,7 @@ namespace Rune.Mod
         private void OnGUI()
         {
             DrawOverlay();
+            DrawLocalControls();
             if (show && Player.m_localPlayer) {
                 if (!controlsPositioned) { window.position = new Vector2(Mathf.Max(8, Screen.width - window.width - 24), 80); controlsPositioned = true; }
                 window = KeepOnScreen(GUILayout.Window(778123, KeepOnScreen(window), DrawWindow, "RUNE FELLOWSHIP — companion overview"));
@@ -262,17 +265,18 @@ namespace Rune.Mod
             if (selected != overviewCompanion || Time.unscaledTime >= overviewRefreshAt) {
                 if (selected != overviewCompanion) overviewScroll=Vector2.zero;
                 overviewCompanion=selected; overviewRefreshAt=Time.unscaledTime+.5f;
-                overviewLines=selected ? selected.OverviewLines() : new[] { "No companion nearby. Manage your fellowship in Rune." };
+                overviewLines=selected ? selected.OverviewLines() : new[] { "No companion nearby. Press " + localControlsKey.Value + " to create and summon a companion. No desktop app is required." };
             }
             overviewScroll=GUILayout.BeginScrollView(overviewScroll, GUILayout.Height(Mathf.Clamp(Screen.height-240,140,340)));
             foreach (var line in overviewLines) GUILayout.Label(line,overviewText);
             GUILayout.EndScrollView();
             GUILayout.Label("F8 closes this overview. Drag the Fellowship overlay by its header while this is open.",overviewText);
+            if (GUILayout.Button("Open companion controls (" + localControlsKey.Value + ")")) SetLocalControlsVisible(true);
             if (GUILayout.Button("Reset UI positions")) { overlayPosition = new Vector2(-1, -1); overlayPositionDirty = true; SaveOverlayPosition(); resetControlsPosition = true; }
             if (GUILayout.Button("Close")) { show = false; SaveOverlayPosition(); GUIManager.BlockInput(false); }
             GUI.DragWindow(new Rect(0, 0, window.width, 24));
         }
-        private void OnDestroy() { RemoveCompanionPins(); if (show) GUIManager.BlockInput(false); harmony?.UnpatchSelf(); CreatureManager.OnVanillaCreaturesAvailable -= RegisterCreature; }
+        private void OnDestroy() { RemoveCompanionPins(); if (show || localControlsVisible) GUIManager.BlockInput(false); harmony?.UnpatchSelf(); CreatureManager.OnVanillaCreaturesAvailable -= RegisterCreature; }
     }
     [HarmonyPatch(typeof(MonsterAI), nameof(MonsterAI.UpdateAI))]
     public static class CompanionTick
