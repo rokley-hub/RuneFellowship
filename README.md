@@ -5,9 +5,19 @@
 
 ![Rune Fellowship: Viking, dwarf and direwolf](docs/images/rune-fellowship-cover.png)
 
+## Want voice and AI conversations? Download the Rune desktop app
+
+The Rune desktop app is a **separate download from GitHub**. It is not included when you install this mod through Thunderstore.
+
+**[Download the optional Rune desktop app from GitHub](https://github.com/rokley-hub/RuneFellowship/releases/tag/v0.4.41-beta)**
+
+On that release page, open **Assets** and choose **Rune-Online-Installer-0.4.41-beta.zip** for a first installation. The source and update ZIPs are different downloads.
+
+Without the app, you can still press **F6** to summon and control companions, fight alongside them and ride your direwolf.
+
 An unofficial Windows app and Valheim companion mod with local speech, natural-language orders, companion profiles, mod management and an in-game task overview.
 
-**Windows beta: desktop 0.4.41 / game plugin 0.3.26.** Download the online installer and matching source from [GitHub Releases](https://github.com/rokley-hub/RuneFellowship/releases). Extract the whole installer ZIP and run `Install Rune.exe`. Setup downloads selected runtimes and models from their original sources. This beta is unsigned and has been tested on the development PC; see the setup guide, privacy description and known limitations in `docs`. The app does not include Valheim or other authors' game mods. Donations are voluntary and do not unlock features. Rune is not affiliated with Iron Gate, Coffee Stain or OpenAI.
+**Windows beta: desktop 0.4.41 / game plugin 0.3.26.** Download **Rune-Online-Installer-0.4.41-beta.zip** from [the desktop release on GitHub](https://github.com/rokley-hub/RuneFellowship/releases/tag/v0.4.41-beta). Matching source is available on the same release page. Extract the whole installer ZIP and run `Install Rune.exe`. Setup downloads selected runtimes and models from their original sources. This beta is unsigned and has been tested on the development PC; see the setup guide, privacy description and known limitations in `docs`. The app does not include Valheim or other authors' game mods. Donations are voluntary and do not unlock features. Rune is not affiliated with Iron Gate, Coffee Stain or OpenAI.
 
 ## Install and play
 

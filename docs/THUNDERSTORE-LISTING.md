@@ -2,13 +2,28 @@
 
 ![Rune Fellowship promotional banner](https://raw.githubusercontent.com/rokley-hub/RuneFellowship/main/docs/images/rune-fellowship-cover.png)
 
-**Package 0.4.43 | game plugin 0.3.27 | optional desktop 0.4.41 beta**
+**Package 0.4.44 | game plugin 0.3.27 | optional desktop 0.4.41 beta**
 
 Basic companions work entirely in the game: press **F6** to name and summon a companion, then use Follow, Stay, Defend, gathering and return controls. This package contains the game plugin, icon and documentation. The Rune desktop app and online installer are not included.
 
 Build a fellowship of companions in Valheim. Use the in-game controls for basic companions, combat and a rideable direwolf. The separate desktop app adds voice, AI dialogue, its own companion profiles and advanced orders; it is optional for basic gameplay.
 
-## New in package 0.4.43
+## Want voice and AI conversations? Download the Rune desktop app
+
+The Rune desktop app is a **separate download from GitHub**. It is not included when you install this mod through Thunderstore.
+
+**[Download the optional Rune desktop app from GitHub](https://github.com/rokley-hub/RuneFellowship/releases/tag/v0.4.41-beta)**
+
+On that release page, open **Assets** and choose **Rune-Online-Installer-0.4.41-beta.zip** for a first installation. The source and update ZIPs are different downloads.
+
+Without the app, you can still press **F6** to summon and control companions, fight alongside them and ride your direwolf.
+
+## New in package 0.4.44
+
+- Made the optional desktop app download prominent and linked directly to its GitHub release.
+- Added the exact first-install ZIP filename. Game plugin 0.3.27 and all artwork are unchanged from package 0.4.43.
+
+## Added in package 0.4.43
 
 - Added an in-game F6 menu with three saved companion slots, names and six appearances. No desktop setup is needed.
 - Added direct Follow, Stay, Defend, Gather 20 wood/stone, Lend tools, Return and Unsummon controls.
@@ -66,7 +81,7 @@ Existing app-created companions nearby also appear in F6 and can receive basic o
 
 ## Optional voice and AI dialogue
 
-The separate Rune desktop app supplies speech, AI dialogue and its own advanced command workflow. [Source and separate desktop releases](https://github.com/rokley-hub/RuneFellowship) are on GitHub. No installer, desktop application, speech runtime or model is bundled in this Thunderstore package.
+The separate Rune desktop app supplies speech, AI dialogue and its own advanced command workflow. [Download the optional desktop app from GitHub](https://github.com/rokley-hub/RuneFellowship/releases/tag/v0.4.41-beta); choose **Rune-Online-Installer-0.4.41-beta.zip** under **Assets** for a first installation. No installer, desktop application, speech runtime or model is bundled in this Thunderstore package.
 
 Thunderstore declined the desktop online installer because it could not audit all downloaded components and antivirus vendors flagged it. Those antivirus findings remain unresolved; this plugin packaging change is not a security clearance for the installer. Do not bypass quarantine or disable protection to install it.
 
