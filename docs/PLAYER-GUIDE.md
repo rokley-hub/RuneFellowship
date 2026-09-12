@@ -1,6 +1,6 @@
 # Rune Fellowship - player guide
 
-**Standalone package 0.4.43 beta / game plugin 0.3.27. Optional desktop 0.4.41 beta bundles plugin 0.3.26.** Rune is an unofficial Windows companion app for your own licensed Steam copy of Valheim.
+**Standalone package 0.4.44 beta / game plugin 0.3.27. Optional desktop 0.4.41 beta bundles plugin 0.3.26.** Rune is an unofficial Windows companion app for your own licensed Steam copy of Valheim.
 
 ## Want voice and AI conversations? Download the Rune desktop app
 
@@ -12,11 +12,11 @@ On that release page, open **Assets** and choose **Rune-Online-Installer-0.4.41-
 
 Without the app, you can still press **F6** to summon and control companions, fight alongside them and ride your direwolf.
 
-## Standalone plugin 0.4.43 beta
+## Standalone game plugin 0.3.27
 
 Plugin 0.3.27 adds F6 companion setup and basic orders without the desktop app. Install BepInEx, Jotunn and the plugin in an isolated modded profile, enter a solo test world and press F6. Choose one of three slots, name/appearance and Summon. Follow, Stay, Defend, gathering, tool lending, return and unsummoning use the same native executor. F8 remains the information overview. The desktop app is optional for voice, AI dialogue and its advanced workflow. The in-game slots are separate from desktop profiles.
 
-Background native checks passed in a fresh isolated solo world with the Rune app closed: default Rune/Odin summoning, Follow/Stay orders, opening and closing the menu through its runtime methods, native saddle mounting, mounted idle, occupied-mount dismissal protection, world save/reload, ownership persistence and duplicate-summon prevention. Tested with game plugin 0.3.27, BepInExPack 5.4.2350 and Jotunn 2.29.2. The windowless test does not verify physical F6 keyboard input, rendered menu layout, riding animations, full terrain traversal or optional desktop integration. Thunderstore approved the corrected standalone package on 12 September 2026.
+Background native checks passed in a fresh isolated solo world with the Rune app closed: default Rune/Odin summoning, Follow/Stay orders, opening and closing the menu through its runtime methods, native saddle mounting, mounted idle, occupied-mount dismissal protection, world save/reload, ownership persistence and duplicate-summon prevention. Tested with game plugin 0.3.27, BepInExPack 5.4.2350 and Jotunn 2.29.2. The windowless test does not verify physical F6 keyboard input, rendered menu layout, riding animations, full terrain traversal or optional desktop integration. Thunderstore approved the corrected standalone 0.4.43 package on 12 September 2026. Package 0.4.44 clarifies the separate desktop download; the game plugin is unchanged.
 
 ## Optional desktop installation or update
 
